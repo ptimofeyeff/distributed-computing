@@ -21,6 +21,6 @@ add_executable(unnamedPipe src/client-server/Part_3/unnamed_pipe.c)
 
 add_executable(loba src/pal/main.c)
 
-add_executable(test src/pal/testProg.c)
+add_executable(test src/learnC/testProg.c)
 
 add_executable(twoPipes src/pal/twoPipes.c)
