@@ -7,6 +7,7 @@
 
 #include "pa1_starter_code/pa1.h"
 #include "pa1_starter_code/ipc.h"
+#include "pa1_starter_code/common.h"
 
 void createProcesses(int count);
 
@@ -16,6 +17,12 @@ void waitProcesses(int count);
 
 int fd[2];
 
+static const char * const log_open_pipe_descr_r =
+        "pipe descriptor number %d has open for reading in process %1d (pid %5d, parent %5d)\n";
+static const char * const log_open_pipe_descr_w =
+        "pipe descriptor number %d has open for writing in process %1d (pid %5d, parent %5d)\n";
+static const char * const log_close_pipe_descr =
+        "pipe descriptor number %d has close in process %1d (pid %5d, parent %5d)\n";
 
 int main(int argc, char *argv[]) {
 
@@ -27,21 +34,32 @@ int main(int argc, char *argv[]) {
 
 
     Message message;
+
+    FILE *pipesLogs = fopen(pipes_log, "w");
     pipe(fd);
+
+    fprintf(pipesLogs, log_open_pipe_descr_r, fd[0], 0, getpid(), getppid());
+    fprintf(pipesLogs, log_open_pipe_descr_w, fd[1], 0, getpid(), getppid());
+    fflush(pipesLogs);
 
     int processesCount = (int) strtol(argv[2], NULL, 10);
 
     createProcesses(processesCount);
     waitProcesses(processesCount);
 
-
     for (int i = 0; i <processesCount; ++i) {
         read(fd[0], &message, MAX_MESSAGE_LEN);
-        printf("%d\n", message.s_header.s_payload_len);
+        printf("%d\n", message.s_header.s_local_time);
     }
 
     close(fd[0]);
     close(fd[1]);
+
+    fprintf(pipesLogs, log_close_pipe_descr, fd[0], 0, getpid(), getppid());
+    fprintf(pipesLogs, log_close_pipe_descr, fd[1], 0, getpid(), getppid());
+
+    fclose(pipesLogs);
+
 
     return 0;
 }
@@ -66,7 +84,7 @@ void run(local_id id) {
 
     message.s_header.s_magic = MESSAGE_MAGIC;
     message.s_header.s_type = STARTED;
-    message.s_header.s_local_time = time(NULL);
+    message.s_header.s_local_time = time(NULL); // тут записываем отрицательное число из-за 16-разраядной знаковой переменной для времени
     message.s_header.s_payload_len = strlen(createLog);
 
     strcpy(message.s_payload, createLog);
