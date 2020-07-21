@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i <processesCount; ++i) {
         read(fd[0], &message, MAX_MESSAGE_LEN);
-        printf("%s", message.s_payload);
+        printf("%d\n", message.s_header.s_payload_len);
     }
 
     close(fd[0]);
@@ -67,7 +67,7 @@ void run(local_id id) {
     message.s_header.s_magic = MESSAGE_MAGIC;
     message.s_header.s_type = STARTED;
     message.s_header.s_local_time = time(NULL);
-    message.s_header.s_payload_len = MAX_PAYLOAD_LEN;
+    message.s_header.s_payload_len = strlen(createLog);
 
     strcpy(message.s_payload, createLog);
 
