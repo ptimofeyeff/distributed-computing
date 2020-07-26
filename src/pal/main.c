@@ -10,16 +10,13 @@
 #include "pa1_starter_code/common.h"
 
 void createProcesses(int count);
-
 void run(local_id id);
-
 void waitProcesses(int count);
-
 void initPipes();
-
 void finalizePipes();
 
 void sayHello(char *, local_id);
+void sayDone(char *, local_id);
 
 
 int fd[2];
@@ -35,13 +32,6 @@ static const char *const log_close_pipe_descr =
 
 int main(int argc, char *argv[]) {
 
-    /**
-     * 1. Осуществление необходимой подготовки для организации межпроцессорного взаимодействия
-     * 2. Создание X идентичных дочерних процессов
-     * 3. Мониторинг работы дочерних процессов
-     */
-
-
     Message message;
 
     int processesCount = (int) strtol(argv[2], NULL, 10);
@@ -54,9 +44,14 @@ int main(int argc, char *argv[]) {
     createProcesses(processesCount);
     waitProcesses(processesCount);
 
-    for (int i = 0; i < processesCount; ++i) {
+    for (int i = 0; i < processesCount * 2; ++i) {
         read(fd[0], &message, MAX_MESSAGE_LEN);
-        printf("%d\n", message.s_header.s_local_time);
+        printf("parent process receive:\n");
+        printf("message magic = %d\n", message.s_header.s_magic);
+        printf("message local time = %d\n", message.s_header.s_local_time);
+        printf("message payload length = %d\n", message.s_header.s_payload_len);
+        printf("message type = %d\n", message.s_header.s_type);
+        printf("message payload = %s\n\n", message.s_payload);
     }
 
     finalizePipes();
@@ -80,16 +75,23 @@ void run(local_id id) {
     sayHello(startedMessage, id);
 
     Message message;
-
     message.s_header.s_magic = MESSAGE_MAGIC;
     message.s_header.s_type = STARTED;
     // тут записываем отрицательное число из-за 16-разраядной знаковой переменной для времени
     message.s_header.s_local_time = time(NULL);
     message.s_header.s_payload_len = strlen(startedMessage);
-
     strcpy(message.s_payload, startedMessage);
-
     write(fd[1], &message, MAX_MESSAGE_LEN);
+
+    sayDone(startedMessage, id);
+
+    message.s_header.s_type = DONE;
+    // тут записываем отрицательное число из-за 16-разраядной знаковой переменной для времени
+    message.s_header.s_local_time = time(NULL);
+    message.s_header.s_payload_len = strlen(startedMessage);
+    strcpy(message.s_payload, startedMessage);
+    write(fd[1], &message, MAX_MESSAGE_LEN);
+
 
     close(fd[0]);
     close(fd[1]);
@@ -167,4 +169,10 @@ void sayHello(char *startedMessage, local_id id) {
     fprintf(eventsLogs, "%s", startedMessage);
     printf("%s", startedMessage);
 
+}
+
+void sayDone(char *doneMessage, local_id id) {
+    sprintf(doneMessage, log_done_fmt, id);
+    fprintf(eventsLogs, "%s", doneMessage);
+    printf("%s", doneMessage);
 }
