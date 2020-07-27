@@ -15,7 +15,7 @@ typedef struct {
 
 typedef struct {
     PipesData pipesData;
-    local_id localId;
+    local_id *localId;
 } MetaData;
 
 
@@ -41,18 +41,17 @@ int main(int argc, char *argv[]) {
     int procCount = cpCount + 1;
 
     MetaData metaData;
-
     metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
-    metaData.localId = PARENT_ID;
 
     initPipes(procCount, &metaData);
 
     createChild(procCount, &metaData);
     waitChild(cpCount);
 
-
     Message message;
 
+    local_id parentId = PARENT_ID;
+    metaData.localId = &parentId;
 
     for (int i = 1; i <= cpCount; ++i) {
         for (int j = 0; j < 2; ++j) {
@@ -98,10 +97,10 @@ void run(local_id id, int procCount, MetaData *metaData) {
     message.s_header.s_payload_len = strlen(payload);
     strcpy(message.s_payload, payload);
 
-    //metaData->localId = (local_id) malloc(sizeof(local_id));
-    //metaData->localId = id;
-    send(metaData, PARENT_ID, &message);
+    local_id localId = id;
+    metaData->localId = &localId;
 
+    send(metaData, PARENT_ID, &message);
 
     logDone(id, payload);
 
@@ -122,7 +121,9 @@ void run(local_id id, int procCount, MetaData *metaData) {
 // Отправляет сообщение процессу по его айди, в случаи успеха вернет 0
 int send(void *self, local_id destination, const Message *message) {
     MetaData *metaData = (MetaData *) self;
-    write(metaData->pipesData.pipes[1][0][WRITE_DESC], message, sizeof *message);
+    int from = *metaData->localId;
+    int to = destination;
+    write(metaData->pipesData.pipes[from][to][WRITE_DESC], message, sizeof *message);
     return 0;
 }
 
@@ -140,7 +141,9 @@ int send_multicast(void *self, const Message *message) {
 // Получает сообщение от процесса по его айди
 int receive(void *self, local_id sender, Message *message) {
     MetaData *metaData = (MetaData *) self;
-    read(metaData->pipesData.pipes[1][0][READ_DESC], message, sizeof *message);
+    int from = sender;
+    int to = *metaData->localId;
+    read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
     return 0;
 }
 

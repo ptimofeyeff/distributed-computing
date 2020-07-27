@@ -20,6 +20,4 @@ static const char *const log_close_pipe_descr =
         "pipe descriptor number %d has close in process %1d (pid %5d, parent %5d)\n";
 
 
-
-
 #endif //LAB1_MAIN_H
