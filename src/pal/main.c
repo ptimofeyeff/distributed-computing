@@ -1,27 +1,42 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <string.h>
+#include "main.h"
 
-#include "pa1_starter_code/pa1.h"
-#include "pa1_starter_code/ipc.h"
-#include "pa1_starter_code/common.h"
-
-void createProcesses(int count);
-void run(local_id id);
-void waitProcesses(int count);
-void initPipes();
-void finalizePipes();
-
-void sayHello(char *, local_id);
-void sayDone(char *, local_id);
-
-
-int fd[2];
 FILE *eventsLogs;
 FILE *pipesLogs;
+int const DESC_COUNT = 2;
+int const READ_DESC = 0;
+int const WRITE_DESC = 1;
+
+
+void createProcesses(int count, int [][DESC_COUNT], int);
+
+void run(local_id id, int [][DESC_COUNT], int);
+
+void waitProcesses(int count);
+
+void initPipes(int [][DESC_COUNT], int);
+
+void finalizePipes(int [][DESC_COUNT], int);
+
+void logStarted(char *, local_id);
+
+void logDone(char *, local_id);
+
+int computePipesCount(int);
+
+struct Self {
+    local_id sourceId;
+    int pipesCount;
+    int **pipes;
+};
+typedef struct Self Self;
+
+struct Pipe {
+    int pipeCount;
+    int pipeC[][pipeCount];
+    int pipes[];
+};
+
+
 
 static const char *const log_open_pipe_descr_r =
         "pipe descriptor number %d has open for reading in process %1d (pid %5d, parent %5d)\n";
@@ -32,20 +47,28 @@ static const char *const log_close_pipe_descr =
 
 int main(int argc, char *argv[]) {
 
-    Message message;
-
-    int processesCount = (int) strtol(argv[2], NULL, 10);
-
     eventsLogs = fopen(events_log, "w");
 
-    initPipes();
+    int cpCount = (int) strtol(argv[2], NULL, 10);
+    int pipeCount = computePipesCount(cpCount);
 
+    int pipes[cpCount + 1][cpCount + 1][DESC_COUNT];
 
-    createProcesses(processesCount);
+    initPipes(pipes, pipeCount);
+
+    createProcesses(processesCount, pipes, pipeCount);
     waitProcesses(processesCount);
 
-    for (int i = 0; i < processesCount * 2; ++i) {
-        read(fd[0], &message, MAX_MESSAGE_LEN);
+    Self self;
+    self.pipes = (int **) &pipes;
+    self.pipesCount = pipeCount;
+    self.sourceId = PARENT_ID;
+
+    Message message;
+
+
+    for (int i = 1; i < processesCount; ++i) {
+        receive(&self, 1, &message);
         printf("parent process receive:\n");
         printf("message magic = %d\n", message.s_header.s_magic);
         printf("message local time = %d\n", message.s_header.s_local_time);
@@ -54,47 +77,61 @@ int main(int argc, char *argv[]) {
         printf("message payload = %s\n\n", message.s_payload);
     }
 
-    finalizePipes();
+    finalizePipes(pipes, pipeCount);
 
     return 0;
 }
 
 
-void createProcesses(int count) {
-    for (int i = 1; i < count + 1; ++i) {
-        if (fork() == 0) {  // если это дочерний процесс, то ...
-            run(i);
+void createProcesses(int processesCount, int pipes[][DESC_COUNT], int pipesCount) {
+    for (int i = 1; i < processesCount + 1; ++i) {
+        if (fork() == 0) {
+            int processPipes[processesCount * 2][DESC_COUNT];
+
+            for (int j = 0; j < processesCount * 2; ++j) {
+                processPipes[j][READ_DESC] = pipes[j + (i * processesCount)][READ_DESC];
+                processPipes[j][WRITE_DESC] = pipes[j + (i * processesCount)][WRITE_DESC];
+            }
+
+            run(i, pipes, pipesCount);
         }
     }
 }
 
-void run(local_id id) {
+void run(local_id id, int pipes[][DESC_COUNT], int pipesCount) {
 
-    char startedMessage[MAX_PAYLOAD_LEN];
+    char payload[MAX_PAYLOAD_LEN];
 
-    sayHello(startedMessage, id);
+    logStarted(payload, id);
 
     Message message;
     message.s_header.s_magic = MESSAGE_MAGIC;
     message.s_header.s_type = STARTED;
-    // тут записываем отрицательное число из-за 16-разраядной знаковой переменной для времени
     message.s_header.s_local_time = time(NULL);
-    message.s_header.s_payload_len = strlen(startedMessage);
-    strcpy(message.s_payload, startedMessage);
-    write(fd[1], &message, MAX_MESSAGE_LEN);
+    message.s_header.s_payload_len = strlen(payload);
+    strcpy(message.s_payload, payload);
 
-    sayDone(startedMessage, id);
+    Self self;
+    self.pipes = (int **) &pipes;
+    self.pipesCount = pipesCount;
+    self.sourceId = id;
+
+    send(&self, PARENT_ID, &message);
+
+
+    logDone(payload, id);
 
     message.s_header.s_type = DONE;
-    // тут записываем отрицательное число из-за 16-разраядной знаковой переменной для времени
     message.s_header.s_local_time = time(NULL);
-    message.s_header.s_payload_len = strlen(startedMessage);
-    strcpy(message.s_payload, startedMessage);
-    write(fd[1], &message, MAX_MESSAGE_LEN);
+    message.s_header.s_payload_len = strlen(payload);
+    strcpy(message.s_payload, payload);
+
+    send(&self, PARENT_ID, &message);
 
 
-    close(fd[0]);
-    close(fd[1]);
+    // Почему недостаточно finalizePipes()?
+    close(pipes[id][READ_DESC]);
+    close(pipes[id][WRITE_DESC]);
 
     exit(0);
 }
@@ -109,9 +146,14 @@ void waitProcesses(int count) {
 
 // Отправляет сообщение процессу по его айди, в случаи успеха вернет 0
 int send(void *self, local_id destination, const Message *message) {
-    /*
-     * TODO
-     */
+    Self *metaData = (Self *) self;
+
+    local_id source = metaData->sourceId;
+    int **pipes = metaData->pipes;
+    int pipeCount = metaData->pipesCount;
+
+    write(pipes[source][WRITE_DESC], &message, message->s_header.s_payload_len + sizeof(message->s_header));
+
     return 0;
 }
 
@@ -129,9 +171,11 @@ int send_multicast(void *self, const Message *message) {
 // Получает сообщение от процесса по его айди
 // Похоже аллоцировать под сообщение придется самому
 int receive(void *self, local_id source, Message *message) {
-    /*
-     * TODO
-     */
+    Self *metaData = (Self *) self;
+    int **pipes = metaData->pipes;
+
+
+    read(pipes[source][READ_DESC], &message, MAX_MESSAGE_LEN);
     return 0;
 }
 
@@ -144,35 +188,46 @@ int receive_any(void *self, Message *message) {
     return 0;
 }
 
-void initPipes() {
+void initPipes(int pipes[][DESC_COUNT], int pipesCount) {
     pipesLogs = fopen(pipes_log, "w");
-    pipe(fd);
-    fprintf(pipesLogs, log_open_pipe_descr_r, fd[0], 0, getpid(), getppid());
-    fprintf(pipesLogs, log_open_pipe_descr_w, fd[1], 0, getpid(), getppid());
-    fflush(pipesLogs);
-    printf(log_open_pipe_descr_r, fd[0], 0, getpid(), getppid());
-    printf(log_open_pipe_descr_w, fd[1], 0, getpid(), getppid());
+    for (int i = 0; i < pipesCount; ++i) {
+        pipe(pipes[i]);
+        fprintf(pipesLogs, log_open_pipe_descr_r, pipes[i][READ_DESC], 0, getpid(), getppid());
+        fprintf(pipesLogs, log_open_pipe_descr_w, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+        fflush(pipesLogs);
+        printf(log_open_pipe_descr_r, pipes[i][READ_DESC], 0, getpid(), getppid());
+        printf(log_open_pipe_descr_w, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+    }
 }
 
-void finalizePipes() {
-    close(fd[0]);
-    close(fd[1]);
-    fprintf(pipesLogs, log_close_pipe_descr, fd[0], 0, getpid(), getppid());
-    fprintf(pipesLogs, log_close_pipe_descr, fd[1], 0, getpid(), getppid());
-    printf(log_close_pipe_descr, fd[0], 0, getpid(), getppid());
-    printf(log_close_pipe_descr, fd[1], 0, getpid(), getppid());
+void finalizePipes(int pipes[][DESC_COUNT], int pipesCount) {
+    for (int i = 0; i < pipesCount; ++i) {
+        close(pipes[i][0]);
+        close(pipes[i][1]);
+        fprintf(pipesLogs, log_close_pipe_descr, pipes[i][READ_DESC], 0, getpid(), getppid());
+        fprintf(pipesLogs, log_close_pipe_descr, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+        printf(log_close_pipe_descr, pipes[i][READ_DESC], 0, getpid(), getppid());
+        printf(log_close_pipe_descr, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+    }
     fclose(pipesLogs);
 }
 
-void sayHello(char *startedMessage, local_id id) {
+void logStarted(char *startedMessage, local_id id) {
     sprintf(startedMessage, log_started_fmt, id, getpid(), getppid());
     fprintf(eventsLogs, "%s", startedMessage);
     printf("%s", startedMessage);
-
 }
 
-void sayDone(char *doneMessage, local_id id) {
+void logDone(char *doneMessage, local_id id) {
     sprintf(doneMessage, log_done_fmt, id);
     fprintf(eventsLogs, "%s", doneMessage);
     printf("%s", doneMessage);
+}
+
+int computePipesCount(int processes) {
+    if (processes == 1) {
+        return 2;
+    } else {
+        return computePipesCount(processes - 1) + 2 * processes;
+    }
 }
