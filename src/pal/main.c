@@ -13,9 +13,9 @@ void run(local_id id, int [][DESC_COUNT], int);
 
 void waitProcesses(int count);
 
-void initPipes(int [][DESC_COUNT], int);
+void initPipes(int procCount, int [procCount][procCount][DESC_COUNT]);
 
-void finalizePipes(int [][DESC_COUNT], int);
+void finalizePipes(int procCount, int [procCount][procCount][DESC_COUNT]);
 
 void logStarted(char *, local_id);
 
@@ -30,13 +30,6 @@ struct Self {
 };
 typedef struct Self Self;
 
-struct Pipe {
-    int pipeCount;
-    int pipeC[][pipeCount];
-    int pipes[];
-};
-
-
 
 static const char *const log_open_pipe_descr_r =
         "pipe descriptor number %d has open for reading in process %1d (pid %5d, parent %5d)\n";
@@ -50,13 +43,14 @@ int main(int argc, char *argv[]) {
     eventsLogs = fopen(events_log, "w");
 
     int cpCount = (int) strtol(argv[2], NULL, 10);
-    int pipeCount = computePipesCount(cpCount);
+    //int pipeCount = computePipesCount(cpCount);
+    int procCount = cpCount + 1;
 
-    int pipes[cpCount + 1][cpCount + 1][DESC_COUNT];
+    int pipes[procCount][procCount][DESC_COUNT];
 
-    initPipes(pipes, pipeCount);
+    initPipes(procCount, pipes);
 
-    createProcesses(processesCount, pipes, pipeCount);
+    /*createProcesses(processesCount, pipes, pipeCount);
     waitProcesses(processesCount);
 
     Self self;
@@ -75,9 +69,9 @@ int main(int argc, char *argv[]) {
         printf("message payload length = %d\n", message.s_header.s_payload_len);
         printf("message type = %d\n", message.s_header.s_type);
         printf("message payload = %s\n\n", message.s_payload);
-    }
+    }*/
 
-    finalizePipes(pipes, pipeCount);
+    finalizePipes(procCount, pipes);
 
     return 0;
 }
@@ -188,26 +182,35 @@ int receive_any(void *self, Message *message) {
     return 0;
 }
 
-void initPipes(int pipes[][DESC_COUNT], int pipesCount) {
+void initPipes(int procCount, int pipes[procCount][procCount][DESC_COUNT]) {
     pipesLogs = fopen(pipes_log, "w");
-    for (int i = 0; i < pipesCount; ++i) {
-        pipe(pipes[i]);
-        fprintf(pipesLogs, log_open_pipe_descr_r, pipes[i][READ_DESC], 0, getpid(), getppid());
-        fprintf(pipesLogs, log_open_pipe_descr_w, pipes[i][WRITE_DESC], 0, getpid(), getppid());
-        fflush(pipesLogs);
-        printf(log_open_pipe_descr_r, pipes[i][READ_DESC], 0, getpid(), getppid());
-        printf(log_open_pipe_descr_w, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+    for (int i = 0; i < procCount; ++i) {
+        for (int j = 0; j < procCount; ++j) {
+            if (i != j) {
+                pipe(pipes[i][j]);
+                fprintf(pipesLogs, log_open_pipe_descr_r, pipes[i][j][READ_DESC], PARENT_ID, getpid(), getppid());
+                fprintf(pipesLogs, log_open_pipe_descr_w, pipes[i][j][WRITE_DESC], PARENT_ID, getpid(), getppid());
+                fflush(pipesLogs);
+                printf(log_open_pipe_descr_r, pipes[i][j][READ_DESC], PARENT_ID, getpid(), getppid());
+                printf(log_open_pipe_descr_w, pipes[i][j][WRITE_DESC], PARENT_ID, getpid(), getppid());
+            }
+        }
+
     }
 }
 
-void finalizePipes(int pipes[][DESC_COUNT], int pipesCount) {
-    for (int i = 0; i < pipesCount; ++i) {
-        close(pipes[i][0]);
-        close(pipes[i][1]);
-        fprintf(pipesLogs, log_close_pipe_descr, pipes[i][READ_DESC], 0, getpid(), getppid());
-        fprintf(pipesLogs, log_close_pipe_descr, pipes[i][WRITE_DESC], 0, getpid(), getppid());
-        printf(log_close_pipe_descr, pipes[i][READ_DESC], 0, getpid(), getppid());
-        printf(log_close_pipe_descr, pipes[i][WRITE_DESC], 0, getpid(), getppid());
+void finalizePipes(int procCount, int pipes[procCount][procCount][DESC_COUNT]) {
+    for (int i = 0; i < procCount; ++i) {
+        for (int j = 0; j < procCount; ++j) {
+            if( i != j) {
+                close(pipes[i][j][READ_DESC]);
+                close(pipes[i][j][WRITE_DESC]);
+                fprintf(pipesLogs, log_close_pipe_descr, pipes[i][j][READ_DESC], 0, getpid(), getppid());
+                fprintf(pipesLogs, log_close_pipe_descr, pipes[i][j][WRITE_DESC], 0, getpid(), getppid());
+                printf(log_close_pipe_descr, pipes[i][j][READ_DESC], 0, getpid(), getppid());
+                printf(log_close_pipe_descr, pipes[i][j][WRITE_DESC], 0, getpid(), getppid());
+            }
+        }
     }
     fclose(pipesLogs);
 }
