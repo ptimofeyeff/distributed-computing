@@ -54,14 +54,16 @@ int main(int argc, char *argv[]) {
     Message message;
 
 
-    for (int i = 0; i < 2; ++i) {
-        receive(&metaData, i, &message);
-        printf("parent process receive:\n");
-        printf("message magic = %d\n", message.s_header.s_magic);
-        printf("message local time = %d\n", message.s_header.s_local_time);
-        printf("message payload length = %d\n", message.s_header.s_payload_len);
-        printf("message type = %d\n", message.s_header.s_type);
-        printf("message payload = %s\n\n", message.s_payload);
+    for (int i = 1; i <= cpCount; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            receive(&metaData, i, &message);
+            printf("\nparent process receive:\n");
+            printf("message magic = %d\n", message.s_header.s_magic);
+            printf("message local time = %d\n", message.s_header.s_local_time);
+            printf("message payload length = %d\n", message.s_header.s_payload_len);
+            printf("message type = %d\n", message.s_header.s_type);
+            printf("message payload = %s\n", message.s_payload);
+        }
     }
 
     finalizePipes(procCount, &metaData);
@@ -136,7 +138,7 @@ int send_multicast(void *self, const Message *message) {
 
 
 // Получает сообщение от процесса по его айди
-int receive(void *self, local_id source, Message *message) {
+int receive(void *self, local_id sender, Message *message) {
     MetaData *metaData = (MetaData *) self;
     read(metaData->pipesData.pipes[1][0][READ_DESC], message, sizeof *message);
     return 0;
