@@ -19,19 +19,25 @@ typedef struct {
 } MetaData;
 
 
-void createChild(int procCount, MetaData *);
+void createChild(MetaData *);
 
-void run(local_id id, int procCount, MetaData *);
+void run(local_id id, MetaData *);
 
 void waitChild(int count);
 
-void initPipes(int procCount, MetaData *);
+void initPipes(MetaData *);
 
-void finalizePipes(int procCount, MetaData *);
+void finalizePipes(MetaData *);
 
 void logStarted(local_id, char *);
 
 void logDone(local_id, char *);
+
+void logReceiveStart(local_id, char *);
+
+void logReceiveDone(local_id, char *);
+
+void printMessage(Message *message, local_id id);
 
 int main(int argc, char *argv[]) {
 
@@ -43,38 +49,36 @@ int main(int argc, char *argv[]) {
     MetaData metaData;
     metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
 
-    initPipes(procCount, &metaData);
+    initPipes(&metaData);
 
-    createChild(procCount, &metaData);
-    waitChild(cpCount);
+    createChild(&metaData);
+    //waitChild(cpCount);
 
     Message message;
 
     local_id parentId = PARENT_ID;
     metaData.localId = &parentId;
 
+    // receive started
     for (int i = 1; i <= cpCount; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            receive(&metaData, i, &message);
-            printf("\nparent process receive:\n");
-            printf("message magic = %d\n", message.s_header.s_magic);
-            printf("message local time = %d\n", message.s_header.s_local_time);
-            printf("message payload length = %d\n", message.s_header.s_payload_len);
-            printf("message type = %d\n", message.s_header.s_type);
-            printf("message payload = %s\n", message.s_payload);
-        }
+        receive(&metaData, i, &message);
     }
 
-    finalizePipes(procCount, &metaData);
+    // receive done
+    for (int i = 1; i <= cpCount; ++i) {
+        receive(&metaData, i, &message);
+    }
+
+    finalizePipes(&metaData);
 
     return 0;
 }
 
 
-void createChild(int procCount, MetaData *metaData) {
-    for (int i = 1; i < procCount; ++i) {
+void createChild(MetaData *metaData) {
+    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
         if (fork() == 0) {  // прокидываем одну общую методату с матрицей пайпов в каждого ребенка
-            run(i, procCount, metaData);
+            run(i, metaData);
         }
     }
 }
@@ -86,33 +90,54 @@ void waitChild(int cpCount) {
     }
 }
 
-void run(local_id id, int procCount, MetaData *metaData) {
+void run(local_id id, MetaData *metaData) {
 
     char payload[MAX_PAYLOAD_LEN];
     logStarted(id, payload);
-    Message message;
-    message.s_header.s_magic = MESSAGE_MAGIC;
-    message.s_header.s_type = STARTED;
-    message.s_header.s_local_time = time(NULL);
-    message.s_header.s_payload_len = strlen(payload);
-    strcpy(message.s_payload, payload);
+
+    Message startSender;
+    startSender.s_header.s_magic = MESSAGE_MAGIC;
+    startSender.s_header.s_type = STARTED;
+    startSender.s_header.s_local_time = time(NULL);
+    startSender.s_header.s_payload_len = strlen(payload);
+    strcpy(startSender.s_payload, payload);
 
     local_id localId = id;
     metaData->localId = &localId;
 
-    send(metaData, PARENT_ID, &message);
+    send_multicast(metaData, &startSender);
 
+    Message startReceivers[metaData->pipesData.procCount - 1];
+
+    for (int i = 1; i <metaData->pipesData.procCount; ++i) {
+        if (i != *metaData->localId) {
+            receive(metaData, i, &startReceivers[i]);
+            //printMessage(&startReceivers[i], *metaData->localId);
+        }
+    }
+
+    logReceiveStart(id, payload);
+
+    Message doneSender;
     logDone(id, payload);
 
-    message.s_header.s_type = DONE;
-    message.s_header.s_local_time = time(NULL);
-    message.s_header.s_payload_len = strlen(payload);
-    strcpy(message.s_payload, payload);
+    doneSender.s_header.s_type = DONE;
+    doneSender.s_header.s_local_time = time(NULL);
+    doneSender.s_header.s_payload_len = strlen(payload);
+    strcpy(doneSender.s_payload, payload);
 
-    send(metaData, PARENT_ID, &message);
+    send_multicast(metaData, &doneSender);
 
+    Message doneReceiver[metaData->pipesData.procCount - 1];
 
-    // здесь можно попробовать позакрывать дескрипторы
+    for (int i = 1; i <metaData->pipesData.procCount; ++i) {
+        if (i != *metaData->localId) {
+            receive(metaData, i, &doneReceiver[i]);
+            printMessage(&doneReceiver[i], *metaData->localId);
+        }
+    }
+
+    logReceiveDone(id, payload);
 
     exit(0);
 }
@@ -120,45 +145,80 @@ void run(local_id id, int procCount, MetaData *metaData) {
 
 // Отправляет сообщение процессу по его айди, в случаи успеха вернет 0
 int send(void *self, local_id destination, const Message *message) {
+
     MetaData *metaData = (MetaData *) self;
     int from = *metaData->localId;
     int to = destination;
-    write(metaData->pipesData.pipes[from][to][WRITE_DESC], message, sizeof *message);
-    return 0;
+    printf("in proc %d try to send from %d to %d\n", *metaData->localId, from, to);
+    size_t result = write(metaData->pipesData.pipes[from][to][WRITE_DESC], message, sizeof *message);
+    if (result != EXIT_FAILURE) { // по значению результата можно смотерть сколько байтов переслалось
+        printf("in proc %d success send from %d to %d\n", *metaData->localId, from, to);
+        return EXIT_SUCCESS;
+    } else {
+        printf("fail to send from %d to %d\n", from, to);
+        return EXIT_FAILURE;
+    }
 }
 
 // Посылает соообщение всем другим процессам, включая родителя
 // должен останавливаться на первой ошибке
 int send_multicast(void *self, const Message *message) {
-    /*
-     * TODO
-     */
-
-    return 0;
+    MetaData *metaData = (MetaData *) self;
+    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+        if (i != *metaData->localId) {
+            int result = send(self, i, message);
+            if (result == EXIT_FAILURE) {
+                printf("fail to send_multicast\n");
+                return EXIT_FAILURE;
+            }
+        }
+    }
+    return EXIT_SUCCESS;
 }
 
 
 // Получает сообщение от процесса по его айди
 int receive(void *self, local_id sender, Message *message) {
+
     MetaData *metaData = (MetaData *) self;
     int from = sender;
     int to = *metaData->localId;
-    read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
-    return 0;
+    printf("in proc %d try to receive from %d to %d\n", *metaData->localId, from, to);
+
+    int result = read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
+
+    if (result != EXIT_FAILURE) {
+        if (*metaData->localId == 10) {
+            printf("\nhello\n");
+        }
+        printf("in proc %d success receive from %d to %d\n", *metaData->localId, from, to );
+        return EXIT_SUCCESS;
+    } else {
+        printf("fail to receive from %d to %d\n", from, to);
+        return EXIT_FAILURE;
+    }
 }
 
 // Получает сообщение от любого процесса
 int receive_any(void *self, Message *message) {
-    /*
-     * TODO
-     */
-    return 0;
+
+    MetaData *metaData = (MetaData *) self;
+    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+        if (i != *metaData->localId) {
+            int result = receive(self, i, message);
+            if (result == EXIT_FAILURE) {
+                printf("fail to send_multicast\n");
+                return EXIT_FAILURE;
+            }
+        }
+    }
+    return EXIT_SUCCESS;
 }
 
-void initPipes(int procCount, MetaData *metaData) {
+void initPipes(MetaData *metaData) {
     pipesLogs = fopen(pipes_log, "w");
-    for (int i = 0; i < procCount; ++i) {
-        for (int j = 0; j < procCount; ++j) {
+    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+        for (int j = 0; j < metaData->pipesData.procCount; ++j) {
             if (i != j) {
                 pipe(metaData->pipesData.pipes[i][j]);
                 fprintf(pipesLogs, log_open_pipe_descr_r, metaData->pipesData.pipes[i][j][READ_DESC], PARENT_ID, getpid(), getppid());
@@ -172,16 +232,14 @@ void initPipes(int procCount, MetaData *metaData) {
     }
 }
 
-void finalizePipes(int procCount, MetaData *metaData) {
-    for (int i = 0; i < procCount; ++i) {
-        for (int j = 0; j < procCount; ++j) {
+void finalizePipes (MetaData *metaData) {
+    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+        for (int j = 0; j < metaData->pipesData.procCount; ++j) {
             if (i != j) {
                 close(metaData->pipesData.pipes[i][j][READ_DESC]);
                 close(metaData->pipesData.pipes[i][j][WRITE_DESC]);
-                fprintf(pipesLogs, log_close_pipe_descr, metaData->pipesData.pipes[i][j][READ_DESC], 0, getpid(),
-                        getppid());
-                fprintf(pipesLogs, log_close_pipe_descr, metaData->pipesData.pipes[i][j][WRITE_DESC], 0, getpid(),
-                        getppid());
+                fprintf(pipesLogs, log_close_pipe_descr, metaData->pipesData.pipes[i][j][READ_DESC], 0, getpid(), getppid());
+                fprintf(pipesLogs, log_close_pipe_descr, metaData->pipesData.pipes[i][j][WRITE_DESC], 0, getpid(),getppid());
                 printf(log_close_pipe_descr, metaData->pipesData.pipes[i][j][READ_DESC], 0, getpid(), getppid());
                 printf(log_close_pipe_descr, metaData->pipesData.pipes[i][j][WRITE_DESC], 0, getpid(), getppid());
             }
@@ -202,4 +260,30 @@ void logDone(local_id id, char *doneMessage) {
     fprintf(eventsLogs, "%s", doneMessage);
     fflush(eventsLogs);
     printf("%s", doneMessage);
+}
+
+void logReceiveStart(local_id id, char *receiveStartMsg) {
+    sprintf(receiveStartMsg, log_received_all_started_fmt, id);
+    fprintf(eventsLogs, "%s", receiveStartMsg);
+    fflush(eventsLogs);
+    printf("%s", receiveStartMsg);
+}
+
+void logReceiveDone(local_id id, char *receiveDoneMsg) {
+    sprintf(receiveDoneMsg, log_received_all_done_fmt, id);
+    fprintf(eventsLogs, "%s", receiveDoneMsg);
+    fflush(eventsLogs);
+    printf("%s", receiveDoneMsg);
+}
+
+
+void printMessage(Message *message, local_id id) {
+    printf("\n\nprocess with id %d receive:\n"
+           "message magic = %d\n"
+           "message local time = %d\n"
+           "message payload length = %d\n"
+           "message type = %d\n"
+           "message payload = %s\n\n",
+           id, message->s_header.s_magic, message->s_header.s_local_time,  message->s_header.s_payload_len,
+           message->s_header.s_type, message->s_payload);
 }
