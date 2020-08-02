@@ -18,15 +18,14 @@ int main(int argc, char *argv[]) {
 
     MetaData metaData;
     metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
+    local_id parentId = PARENT_ID;
+    metaData.localId = &parentId;
 
     initPipes(&metaData);
 
     createChild(&metaData);
 
     Message message;
-
-    local_id parentId = PARENT_ID;
-    metaData.localId = &parentId;
 
     // receive started
     for (int i = 1; i <= cpCount; ++i) {
