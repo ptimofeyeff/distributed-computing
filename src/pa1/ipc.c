@@ -24,7 +24,7 @@ int send(void *self, local_id destination, const Message *message) {
 // должен останавливаться на первой ошибке
 int send_multicast(void *self, const Message *message) {
     MetaData *metaData = (MetaData *) self;
-    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+    for (int i = 0; i < metaData->procCount; ++i) {
         if (i != metaData->localId) {
             int result = send(self, i, message);
             if (result == EXIT_FAILURE) {
@@ -64,7 +64,7 @@ int receive(void *self, local_id sender, Message *message) {
 int receive_any(void *self, Message *message) {
 
     MetaData *metaData = (MetaData *) self;
-    for (int i = 0; i < metaData->pipesData.procCount; ++i) {
+    for (int i = 0; i < metaData->procCount; ++i) {
         if (i != metaData->localId) {
             int result = receive(self, i, message);
             if (result == EXIT_FAILURE) {

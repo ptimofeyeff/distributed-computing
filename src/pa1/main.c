@@ -3,9 +3,9 @@
 #include "pipes.h"
 
 
-void createChild(MetaData *);
+void createChild(MetaData *, ProcessPipes []);
 
-void run(local_id id, MetaData *);
+void run(MetaData *);
 
 void waitChild(int count);
 
@@ -18,12 +18,18 @@ int main(int argc, char *argv[]) {
     int procCount = cpCount + 1;
 
     MetaData metaData;
-    metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
+    metaData.procCount = procCount;
     metaData.localId = PARENT_ID;
 
-    openPipes(&metaData);
+    ProcessPipes processesPipes[procCount];
 
-    createChild(&metaData);
+    initParentPipes(&processesPipes[0], procCount);
+
+    for (int i = 1; i <procCount; ++i) {
+        initChildPipes(&processesPipes[i], procCount, i);
+    }
+
+    createChild(&metaData, processesPipes);
 
     Message message;
 
@@ -40,26 +46,28 @@ int main(int argc, char *argv[]) {
     }
 
     waitChild(cpCount);
-    closePipes(&metaData);
+    closeParentPipes(&processesPipes[0], procCount);
     fclose(pipesLogs);
     return 0;
 }
 
 
-void createChild(MetaData *metaData) {
-    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
+void createChild(MetaData *metaData, ProcessPipes processesPipes[]) {
+    for (int i = 1; i < metaData->procCount; ++i) {
+        metaData->localId = i;
+        metaData->pipesData = processesPipes[i];
         fflush(stdout);
         if (fork() == 0) {
-            run(i, metaData);
+            run(metaData);
         }
     }
 }
 
 
-void run(local_id id, MetaData *metaData) {
+void run(MetaData *metaData) {
 
     char payload[MAX_PAYLOAD_LEN];
-    logStarted(id, payload);
+    logStarted(metaData->localId, payload);
 
     Message startSender;
     startSender.s_header.s_magic = MESSAGE_MAGIC;
@@ -68,22 +76,21 @@ void run(local_id id, MetaData *metaData) {
     startSender.s_header.s_payload_len = strlen(payload);
     strcpy(startSender.s_payload, payload);
 
-    metaData->localId = id;
 
     send_multicast(metaData, &startSender);
 
     Message startReceivers;
 
-    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
+    for (int i = 1; i < metaData->procCount; ++i) {
         if (i != metaData->localId) {
             receive(metaData, i, &startReceivers);
         }
     }
 
-    logReceiveStart(id, payload);
+    logReceiveStart(metaData->localId, payload);
 
     Message doneSender;
-    logDone(id, payload);
+    logDone(metaData->procCount, payload);
 
     doneSender.s_header.s_type = DONE;
     doneSender.s_header.s_local_time = time(NULL);
@@ -94,13 +101,14 @@ void run(local_id id, MetaData *metaData) {
 
     Message doneReceiver;
 
-    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
+    for (int i = 1; i < metaData->procCount; ++i) {
         if (i != metaData->localId) {
             receive(metaData, i, &doneReceiver);
         }
     }
 
-    logReceiveDone(id, payload);
+    logReceiveDone(metaData->localId, payload);
+    closeChildPipes(&metaData->pipesData, metaData->procCount, metaData->localId);
 
     exit(0);
 }
