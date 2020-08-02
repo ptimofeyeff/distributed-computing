@@ -12,6 +12,7 @@ void waitChild(int count);
 int main(int argc, char *argv[]) {
 
     eventsLogs = fopen(events_log, "w");
+    pipesLogs = fopen(pipes_log, "w");
 
     int cpCount = (int) strtol(argv[2], NULL, 10);
     int procCount = cpCount + 1;
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]) {
     metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
     metaData.localId = PARENT_ID;
 
-    initPipes(&metaData);
+    openPipes(&metaData);
 
     createChild(&metaData);
 
@@ -29,23 +30,25 @@ int main(int argc, char *argv[]) {
     // receive started
     for (int i = 1; i <= cpCount; ++i) {
         receive(&metaData, i, &message);
+        //printMessage(&message, 0);
     }
 
     // receive done
     for (int i = 1; i <= cpCount; ++i) {
         receive(&metaData, i, &message);
+        //printMessage(&message, 0);
     }
 
-    finalizePipes(&metaData);
-
     waitChild(cpCount);
+    closePipes(&metaData);
+    fclose(pipesLogs);
     return 0;
 }
 
 
 void createChild(MetaData *metaData) {
     for (int i = 1; i < metaData->pipesData.procCount; ++i) {
-        if (fork() == 0) {  // прокидываем одну общую методату с матрицей пайпов в каждого ребенка
+        if (fork() == 0) {
             run(i, metaData);
         }
     }

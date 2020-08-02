@@ -47,6 +47,10 @@ int receive(void *self, local_id sender, Message *message) {
 
     int result = read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
 
+    /*while (result==0) {
+        result = read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
+    }*/
+
     if (result != EXIT_FAILURE) {
         printf("in proc %d success receive from %d to %d\n", metaData->localId, from, to);
         return EXIT_SUCCESS;

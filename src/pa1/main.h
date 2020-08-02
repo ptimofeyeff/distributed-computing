@@ -30,6 +30,6 @@ typedef struct {
 typedef struct {
     PipesData pipesData;
     local_id localId;
-} MetaData;
+} __attribute__((packed)) MetaData;
 
 #endif //LAB1_MAIN_H

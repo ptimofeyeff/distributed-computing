@@ -2,4 +2,5 @@ cmake-build-debug
 src/client-server
 src/cp
 src/learnC
+src/morinaLab
 .idea

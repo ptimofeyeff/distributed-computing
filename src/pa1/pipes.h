@@ -7,9 +7,16 @@
 
 FILE *pipesLogs;
 
-void initPipes(MetaData *);
+void openPipes(MetaData *);
 
-void finalizePipes(MetaData *);
+void initParentPipes(MetaData *);
 
+void initChildPipes(MetaData *);
+
+void closeParentPipes(MetaData *);
+
+void closeChildPipes(MetaData *);
+
+void closePipes(MetaData *);
 
 #endif //LAB1_PIPES_H
