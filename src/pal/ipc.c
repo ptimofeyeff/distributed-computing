@@ -51,7 +51,7 @@ int receive(void *self, local_id sender, Message *message) {
         if (*metaData->localId == 10) {
             printf("\nhello\n");
         }
-        printf("in proc %d success receive from %d to %d\n", *metaData->localId, from, to );
+        printf("in proc %d success receive from %d to %d\n", *metaData->localId, from, to);
         return EXIT_SUCCESS;
     } else {
         printf("fail to receive from %d to %d\n", from, to);

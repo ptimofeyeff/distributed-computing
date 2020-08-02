@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
     initPipes(&metaData);
 
     createChild(&metaData);
-    //waitChild(cpCount);
 
     Message message;
 
@@ -41,6 +40,7 @@ int main(int argc, char *argv[]) {
 
     finalizePipes(&metaData);
 
+    waitChild(cpCount);
     return 0;
 }
 
@@ -71,12 +71,11 @@ void run(local_id id, MetaData *metaData) {
 
     send_multicast(metaData, &startSender);
 
-    Message startReceivers[metaData->pipesData.procCount - 1];
+    Message startReceivers;
 
-    for (int i = 1; i <metaData->pipesData.procCount; ++i) {
+    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
         if (i != *metaData->localId) {
-            receive(metaData, i, &startReceivers[i]);
-            //printMessage(&startReceivers[i], *metaData->localId);
+            receive(metaData, i, &startReceivers);
         }
     }
 
@@ -92,12 +91,11 @@ void run(local_id id, MetaData *metaData) {
 
     send_multicast(metaData, &doneSender);
 
-    Message doneReceiver[metaData->pipesData.procCount - 1];
+    Message doneReceiver;
 
-    for (int i = 1; i <metaData->pipesData.procCount; ++i) {
+    for (int i = 1; i < metaData->pipesData.procCount; ++i) {
         if (i != *metaData->localId) {
-            receive(metaData, i, &doneReceiver[i]);
-            printMessage(&doneReceiver[i], *metaData->localId);
+            receive(metaData, i, &doneReceiver);
         }
     }
 
@@ -108,7 +106,6 @@ void run(local_id id, MetaData *metaData) {
 
 void waitChild(int cpCount) {
     for (int i = 0; i < cpCount; i++) {
-        int pid = wait(NULL);
-        //printf("child process with pid = %d was finished\n", pid);
+        wait(NULL);
     }
 }
