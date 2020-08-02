@@ -23,4 +23,4 @@ add_executable(loba src/pal/main.c src/pal/logs.c src/pal/pipes.c src/pal/ipc.c)
 
 add_executable(test src/learnC/testProg.c)
 
-add_executable(twoPipes src/pal/twoPipes.c)
+add_executable(twoPipes src/learnC/twoPipes.c)
