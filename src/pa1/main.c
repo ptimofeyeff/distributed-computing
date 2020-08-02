@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
 
 void createChild(MetaData *metaData) {
     for (int i = 1; i < metaData->pipesData.procCount; ++i) {
+        fflush(stdout);
         if (fork() == 0) {
             run(i, metaData);
         }
