@@ -19,7 +19,7 @@ add_executable(mutex src/client-server/Part_2/lock_mutex.c)
 
 add_executable(unnamedPipe src/client-server/Part_3/unnamed_pipe.c)
 
-add_executable(loba src/pal/main.c)
+add_executable(loba src/pal/main.c src/pal/logs.c src/pal/pipes.c src/pal/ipc.c)
 
 add_executable(test src/learnC/testProg.c)
 
