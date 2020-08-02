@@ -18,8 +18,7 @@ int main(int argc, char *argv[]) {
 
     MetaData metaData;
     metaData.pipesData.procCount = procCount; // длинна и ширина матрицы пайпов
-    local_id parentId = PARENT_ID;
-    metaData.localId = &parentId;
+    metaData.localId = PARENT_ID;
 
     initPipes(&metaData);
 
@@ -65,15 +64,14 @@ void run(local_id id, MetaData *metaData) {
     startSender.s_header.s_payload_len = strlen(payload);
     strcpy(startSender.s_payload, payload);
 
-    local_id localId = id;
-    metaData->localId = &localId;
+    metaData->localId = id;
 
     send_multicast(metaData, &startSender);
 
     Message startReceivers;
 
     for (int i = 1; i < metaData->pipesData.procCount; ++i) {
-        if (i != *metaData->localId) {
+        if (i != metaData->localId) {
             receive(metaData, i, &startReceivers);
         }
     }
@@ -93,7 +91,7 @@ void run(local_id id, MetaData *metaData) {
     Message doneReceiver;
 
     for (int i = 1; i < metaData->pipesData.procCount; ++i) {
-        if (i != *metaData->localId) {
+        if (i != metaData->localId) {
             receive(metaData, i, &doneReceiver);
         }
     }

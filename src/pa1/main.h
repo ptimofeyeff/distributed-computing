@@ -29,7 +29,7 @@ typedef struct {
 
 typedef struct {
     PipesData pipesData;
-    local_id *localId;
+    local_id localId;
 } MetaData;
 
 #endif //LAB1_MAIN_H
