@@ -7,6 +7,10 @@
 
 FILE *pipesLogs;
 
+void openPipes(ProcessPipes *, int);
+
+void closePipes(ProcessPipes *, int);
+
 void initParentPipes(ProcessPipes *, int);
 
 void initChildPipes(ProcessPipes *, int, local_id);

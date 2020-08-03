@@ -3,8 +3,6 @@
 #include "stdio.h"
 #include <unistd.h>
 
-
-// Отправляет сообщение процессу по его айди, в случаи успеха вернет 0
 int send(void *self, local_id destination, const Message *message) {
     MetaData *metaData = (MetaData *) self;
     local_id from = metaData->localId;
@@ -20,8 +18,6 @@ int send(void *self, local_id destination, const Message *message) {
     }
 }
 
-// Посылает соообщение всем другим процессам, включая родителя
-// должен останавливаться на первой ошибке
 int send_multicast(void *self, const Message *message) {
     MetaData *metaData = (MetaData *) self;
     for (int i = 0; i < metaData->procCount; ++i) {
@@ -36,8 +32,6 @@ int send_multicast(void *self, const Message *message) {
     return EXIT_SUCCESS;
 }
 
-
-// Получает сообщение от процесса по его айди
 int receive(void *self, local_id sender, Message *message) {
 
     MetaData *metaData = (MetaData *) self;
@@ -46,10 +40,6 @@ int receive(void *self, local_id sender, Message *message) {
     printf("in proc %d try to receive from %d to %d\n", metaData->localId, from, to);
 
     int result = read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
-
-    /*while (result==0) {
-        result = read(metaData->pipesData.pipes[from][to][READ_DESC], message, sizeof *message);
-    }*/
 
     if (result != EXIT_FAILURE) {
         printf("in proc %d success receive from %d to %d\n", metaData->localId, from, to);
@@ -60,7 +50,6 @@ int receive(void *self, local_id sender, Message *message) {
     }
 }
 
-// Получает сообщение от любого процесса
 int receive_any(void *self, Message *message) {
 
     MetaData *metaData = (MetaData *) self;

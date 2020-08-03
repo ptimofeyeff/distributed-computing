@@ -2,8 +2,11 @@
 #include "logs.h"
 #include "pipes.h"
 
+void buildMessage(Message *, char *, MessageType);
 
-void createChild(MetaData *, ProcessPipes []);
+void receiveMessages(MetaData *, Message *);
+
+void createChild(MetaData *, ProcessPipes);
 
 void run(MetaData *);
 
@@ -19,43 +22,40 @@ int main(int argc, char *argv[]) {
 
     MetaData metaData;
     metaData.procCount = procCount;
-    metaData.localId = PARENT_ID;
 
-    ProcessPipes processesPipes[procCount];
+    ProcessPipes processesPipes;
 
-    initParentPipes(&processesPipes[0], procCount);
+    /*initParentPipes(&processesPipes[0], procCount);
 
     for (int i = 1; i <procCount; ++i) {
         initChildPipes(&processesPipes[i], procCount, i);
-    }
+    }*/
+
+    openPipes(&processesPipes, procCount);
 
     createChild(&metaData, processesPipes);
 
     Message message;
 
     // receive started
-    for (int i = 1; i <= cpCount; ++i) {
-        receive(&metaData, i, &message);
-        //printMessage(&message, 0);
-    }
+    metaData.localId = PARENT_ID;
+    receiveMessages(&metaData, &message);
 
     // receive done
-    for (int i = 1; i <= cpCount; ++i) {
-        receive(&metaData, i, &message);
-        //printMessage(&message, 0);
-    }
+    receiveMessages(&metaData, &message);
 
     waitChild(cpCount);
-    closeParentPipes(&processesPipes[0], procCount);
+    //closeParentPipes(&processesPipes[0], procCount);
+    closePipes(&processesPipes, procCount);
     fclose(pipesLogs);
     return 0;
 }
 
 
-void createChild(MetaData *metaData, ProcessPipes processesPipes[]) {
+void createChild(MetaData *metaData, ProcessPipes processesPipes) {
     for (int i = 1; i < metaData->procCount; ++i) {
         metaData->localId = i;
-        metaData->pipesData = processesPipes[i];
+        metaData->pipesData = processesPipes;
         fflush(stdout);
         if (fork() == 0) {
             run(metaData);
@@ -65,56 +65,49 @@ void createChild(MetaData *metaData, ProcessPipes processesPipes[]) {
 
 
 void run(MetaData *metaData) {
-
     char payload[MAX_PAYLOAD_LEN];
+
+    Message startMessage;
     logStarted(metaData->localId, payload);
+    buildMessage(&startMessage, payload, STARTED);
+    send_multicast(metaData, &startMessage);
 
-    Message startSender;
-    startSender.s_header.s_magic = MESSAGE_MAGIC;
-    startSender.s_header.s_type = STARTED;
-    startSender.s_header.s_local_time = time(NULL);
-    startSender.s_header.s_payload_len = strlen(payload);
-    strcpy(startSender.s_payload, payload);
-
-
-    send_multicast(metaData, &startSender);
-
-    Message startReceivers;
-
-    for (int i = 1; i < metaData->procCount; ++i) {
-        if (i != metaData->localId) {
-            receive(metaData, i, &startReceivers);
-        }
-    }
-
+    Message startReceiver;
+    receiveMessages(metaData, &startReceiver);
     logReceiveStart(metaData->localId, payload);
 
-    Message doneSender;
-    logDone(metaData->procCount, payload);
-
-    doneSender.s_header.s_type = DONE;
-    doneSender.s_header.s_local_time = time(NULL);
-    doneSender.s_header.s_payload_len = strlen(payload);
-    strcpy(doneSender.s_payload, payload);
-
-    send_multicast(metaData, &doneSender);
+    Message doneMessage;
+    logDone(metaData->localId, payload);
+    buildMessage(&doneMessage, payload, DONE);
+    send_multicast(metaData, &doneMessage);
 
     Message doneReceiver;
-
-    for (int i = 1; i < metaData->procCount; ++i) {
-        if (i != metaData->localId) {
-            receive(metaData, i, &doneReceiver);
-        }
-    }
-
+    receiveMessages(metaData, &doneReceiver);
     logReceiveDone(metaData->localId, payload);
-    closeChildPipes(&metaData->pipesData, metaData->procCount, metaData->localId);
 
+    //closeChildPipes(&metaData->pipesData, metaData->procCount, metaData->localId);
     exit(0);
 }
 
 void waitChild(int cpCount) {
     for (int i = 0; i < cpCount; i++) {
         wait(NULL);
+    }
+}
+
+void buildMessage(Message *message, char *payload, MessageType type) {
+    message->s_header.s_magic = MESSAGE_MAGIC;
+    message->s_header.s_type = type;
+    message->s_header.s_local_time = time(NULL);
+    message->s_header.s_payload_len = strlen(payload);
+    strcpy(message->s_payload, payload);
+}
+
+void receiveMessages(MetaData *metaData, Message *message) {
+    for (int i = 1; i < metaData->procCount; ++i) {
+        if (i != metaData->localId) {
+            receive(metaData, i, message);
+            //printMessage(message, metaData->localId);
+        }
     }
 }
