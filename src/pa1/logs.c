@@ -1,4 +1,5 @@
 #include "logs.h"
+#include "pipes.h"
 
 
 void logStarted(local_id id, char *startedMessage) {
@@ -6,6 +7,7 @@ void logStarted(local_id id, char *startedMessage) {
     fprintf(eventsLogs, "%s", startedMessage);
     fflush(eventsLogs);
     printf("%s", startedMessage);
+    fflush(stdout);
 }
 
 void logDone(local_id id, char *doneMessage) {
@@ -13,6 +15,7 @@ void logDone(local_id id, char *doneMessage) {
     fprintf(eventsLogs, "%s", doneMessage);
     fflush(eventsLogs);
     printf("%s", doneMessage);
+    fflush(stdout);
 }
 
 void logReceiveStart(local_id id, char *receiveStartMsg) {
@@ -20,6 +23,7 @@ void logReceiveStart(local_id id, char *receiveStartMsg) {
     fprintf(eventsLogs, "%s", receiveStartMsg);
     fflush(eventsLogs);
     printf("%s", receiveStartMsg);
+    fflush(stdout);
 }
 
 void logReceiveDone(local_id id, char *receiveDoneMsg) {
@@ -27,7 +31,23 @@ void logReceiveDone(local_id id, char *receiveDoneMsg) {
     fprintf(eventsLogs, "%s", receiveDoneMsg);
     fflush(eventsLogs);
     printf("%s", receiveDoneMsg);
+    fflush(stdout);
 }
+
+void logOpenDescriptor(int fd, char *type, int from, int to) {
+    fprintf(pipesLogs, log_open_pipe_descr, fd, type, from, to);
+    fflush(pipesLogs);
+    printf(log_open_pipe_descr, fd, type, from, to);
+    fflush(stdout);
+}
+
+void logCloseDescriptor(int fd, local_id id) {
+    fprintf(pipesLogs, log_close_pipe_descr, fd, id);
+    fflush(pipesLogs);
+    printf(log_close_pipe_descr, fd, id);
+    fflush(stdout);
+}
+
 
 void printMessage(Message *message, local_id id) {
     printf("\n\nprocess with id %d receive:\n"
@@ -38,4 +58,5 @@ void printMessage(Message *message, local_id id) {
            "message payload = %s\n\n",
            id, message->s_header.s_magic, message->s_header.s_local_time,  message->s_header.s_payload_len,
            message->s_header.s_type, message->s_payload);
+    fflush(stdout);
 }

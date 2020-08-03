@@ -8,10 +8,8 @@
 
 FILE *eventsLogs;
 
-static const char *const log_open_pipe_descr_r =
-        "pipe descriptor number %d has open for reading from %d to %d for process %d\n";
-static const char *const log_open_pipe_descr_w =
-        "pipe descriptor number %d has open for writing from %d to %d for process %d\n";
+static const char *const log_open_pipe_descr =
+        "pipe descriptor number %d has open for %s from %d to %d\n";
 static const char *const log_close_pipe_descr =
         "pipe descriptor number %d has close in process %d\n";
 
@@ -22,6 +20,10 @@ void logDone(local_id, char *);
 void logReceiveStart(local_id, char *);
 
 void logReceiveDone(local_id, char *);
+
+void logOpenDescriptor(int, char *, int, int);
+
+void logCloseDescriptor(int, local_id);
 
 void printMessage(Message *message, local_id id);
 
