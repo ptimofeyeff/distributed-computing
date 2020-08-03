@@ -6,7 +6,7 @@ void buildMessage(Message *, char *, MessageType);
 
 void receiveMessages(MetaData *, Message *);
 
-void createChild(MetaData *, ProcessPipes []);
+void createChild(MetaData *);
 
 void run(MetaData *);
 
@@ -20,24 +20,14 @@ int main(int argc, char *argv[]) {
     int cpCount = (int) strtol(argv[2], NULL, 10);
     int procCount = cpCount + 1;
 
+    ProcessPipes processesPipes;
+    openPipes(&processesPipes, procCount); // инициализированная полная матрица пайпов
+
     MetaData metaData;
     metaData.procCount = procCount;
+    metaData.pipesData = processesPipes;
 
-    ProcessPipes processesPipes;
-    //ProcessPipes parentPipes;
-    ProcessPipes childrenPipes[procCount];
-
-
-    openPipes(&processesPipes, procCount); // инициализированная полная матрица пайпов
-    childrenPipes[0] = processesPipes;
-
-    //initParentPipes(&processesPipes, &parentPipes, procCount);
-
-    /*for (int i = 1; i <procCount; ++i) {
-        initChildPipes(&processesPipes, &childrenPipes[i], i, procCount);
-    }*/
-
-    createChild(&metaData, childrenPipes);
+    createChild(&metaData);
 
     Message message;
 
@@ -50,24 +40,21 @@ int main(int argc, char *argv[]) {
     receiveMessages(&metaData, &message);
 
     waitChild(cpCount);
-    closePipes(&processesPipes, procCount);
+    closePipes(&processesPipes, procCount, PARENT_ID);
     fclose(pipesLogs);
     return 0;
 }
 
 
-void createChild(MetaData *metaData, ProcessPipes childrenPipes[]) {
+void createChild(MetaData *metaData) {
     for (int i = 1; i < metaData->procCount; ++i) {
         metaData->localId = i;
-        metaData->pipesData = childrenPipes[0];
         fflush(stdout);
         if (fork() == 0) {
-            /*for (int j = 0; j <metaData->procCount; ++j) {
-                if (i != j) {
-                    closePipes(&childrenPipes[j], metaData->procCount);
-                }
-            }*/
+            closeOtherChildDescriptors(&metaData->pipesData, i, metaData->procCount);
             run(metaData);
+        } else {
+            closeOtherParentDescriptors(&metaData->pipesData, metaData->procCount);
         }
     }
 }
@@ -94,7 +81,7 @@ void run(MetaData *metaData) {
     receiveMessages(metaData, &doneReceiver);
     logReceiveDone(metaData->localId, payload);
 
-    //closeChildPipes(&metaData->pipesData, metaData->procCount, metaData->localId);
+    closePipes(&metaData->pipesData, metaData->procCount, metaData->localId);
     exit(0);
 }
 

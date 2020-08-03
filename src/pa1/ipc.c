@@ -14,7 +14,6 @@ int send(void *self, local_id destination, const Message *message) {
     if (result != EXIT_FAILURE) { // по значению результата можно смотерть сколько байтов переслалось
         printf("in proc %d success send from %d to %d by descriptor = %d\n",
                metaData->localId, from, to, metaData->pipesData.pipes[from][to][WRITE_DESC]);
-        printf("result = %zu\n", result);
         fflush(stdout);
         return EXIT_SUCCESS;
     } else {

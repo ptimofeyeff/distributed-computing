@@ -9,18 +9,10 @@ FILE *pipesLogs;
 
 void openPipes(ProcessPipes *, int);
 
-void closePipes(ProcessPipes *, int);
+void closePipes(ProcessPipes *, int, local_id);
 
-void openParentPipes(ProcessPipes *, int);
+void closeOtherChildDescriptors(ProcessPipes *, local_id id, int);
 
-void openChildPipes(ProcessPipes *, int, local_id);
-
-void closeParentPipes(ProcessPipes *, int);
-
-void closeChildPipes(ProcessPipes *, int, local_id);
-
-void initParentPipes(ProcessPipes *, ProcessPipes *, int);
-
-void initChildPipes(ProcessPipes *, ProcessPipes *, local_id, int);
+void closeOtherParentDescriptors(ProcessPipes *, int);
 
 #endif //LAB1_PIPES_H
