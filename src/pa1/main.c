@@ -52,7 +52,7 @@ void createChild(MetaData *metaData) {
         metaData->localId = i;
         fflush(stdout);
         if (fork() == 0) {
-            //closeOtherChildDescriptors(&metaData->pipesData, i, metaData->procCount);
+            closeOtherChildDescriptors(&metaData->pipesData, i, metaData->procCount);
             run(metaData);
         }
     }

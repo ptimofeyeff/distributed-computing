@@ -41,26 +41,21 @@ void closeOtherParentDescriptors(ProcessPipes *processPipes, int procCount) {
 }
 
 void closeOtherChildDescriptors(ProcessPipes *processPipes, local_id id, int procCount) {
-
     for (int i = 0; i < procCount; ++i) {
         for (int j = 0; j < procCount; ++j) {
             if (i != j) {
-                if (i == id) {
+                if (i == id && i > 0) {
                     close(processPipes->pipes[i][j][READ_DESC]);
-                    fprintf(pipesLogs, log_close_pipe_descr, processPipes->pipes[i][j][READ_DESC], PARENT_ID);
-                    printf(log_close_pipe_descr, processPipes->pipes[i][j][READ_DESC], PARENT_ID);
+                    logCloseDescriptor(processPipes->pipes[i][j][READ_DESC], id);
                 } else {
                     if (j == id && i > 0) {
                         close(processPipes->pipes[i][j][WRITE_DESC]);
-                        fprintf(pipesLogs, log_close_pipe_descr, processPipes->pipes[i][j][WRITE_DESC], PARENT_ID);
-                        printf(log_close_pipe_descr, processPipes->pipes[i][j][WRITE_DESC], PARENT_ID);
+                        logCloseDescriptor(processPipes->pipes[i][j][WRITE_DESC], id);
                     } else {
                         close(processPipes->pipes[i][j][READ_DESC]);
                         close(processPipes->pipes[i][j][WRITE_DESC]);
-                        fprintf(pipesLogs, log_close_pipe_descr, processPipes->pipes[i][j][READ_DESC], PARENT_ID);
-                        fprintf(pipesLogs, log_close_pipe_descr, processPipes->pipes[i][j][WRITE_DESC], PARENT_ID);
-                        printf(log_close_pipe_descr, processPipes->pipes[i][j][READ_DESC], PARENT_ID);
-                        printf(log_close_pipe_descr, processPipes->pipes[i][j][READ_DESC], PARENT_ID);
+                        logCloseDescriptor(processPipes->pipes[i][j][READ_DESC], id);
+                        logCloseDescriptor(processPipes->pipes[i][j][WRITE_DESC], id);
                     }
                 }
             }
