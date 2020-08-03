@@ -13,7 +13,7 @@ static const char *const log_open_pipe_descr_r =
 static const char *const log_open_pipe_descr_w =
         "pipe descriptor number %d has open for writing from %d to %d for process %d\n";
 static const char *const log_close_pipe_descr =
-        "pipe descriptor number %d has close\n";
+        "pipe descriptor number %d has close in process %d\n";
 
 void logStarted(local_id, char * q);
 

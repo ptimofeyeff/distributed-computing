@@ -11,12 +11,16 @@ void openPipes(ProcessPipes *, int);
 
 void closePipes(ProcessPipes *, int);
 
-void initParentPipes(ProcessPipes *, int);
+void openParentPipes(ProcessPipes *, int);
 
-void initChildPipes(ProcessPipes *, int, local_id);
+void openChildPipes(ProcessPipes *, int, local_id);
 
 void closeParentPipes(ProcessPipes *, int);
 
 void closeChildPipes(ProcessPipes *, int, local_id);
+
+void initParentPipes(ProcessPipes *, ProcessPipes *, int);
+
+void initChildPipes(ProcessPipes *, ProcessPipes *, local_id, int);
 
 #endif //LAB1_PIPES_H

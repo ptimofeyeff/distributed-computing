@@ -6,7 +6,7 @@ void buildMessage(Message *, char *, MessageType);
 
 void receiveMessages(MetaData *, Message *);
 
-void createChild(MetaData *, ProcessPipes);
+void createChild(MetaData *, ProcessPipes []);
 
 void run(MetaData *);
 
@@ -24,40 +24,49 @@ int main(int argc, char *argv[]) {
     metaData.procCount = procCount;
 
     ProcessPipes processesPipes;
+    //ProcessPipes parentPipes;
+    ProcessPipes childrenPipes[procCount];
 
-    /*initParentPipes(&processesPipes[0], procCount);
 
-    for (int i = 1; i <procCount; ++i) {
-        initChildPipes(&processesPipes[i], procCount, i);
+    openPipes(&processesPipes, procCount); // инициализированная полная матрица пайпов
+    childrenPipes[0] = processesPipes;
+
+    //initParentPipes(&processesPipes, &parentPipes, procCount);
+
+    /*for (int i = 1; i <procCount; ++i) {
+        initChildPipes(&processesPipes, &childrenPipes[i], i, procCount);
     }*/
 
-    openPipes(&processesPipes, procCount);
-
-    createChild(&metaData, processesPipes);
+    createChild(&metaData, childrenPipes);
 
     Message message;
 
     // receive started
     metaData.localId = PARENT_ID;
+    metaData.pipesData = processesPipes;
     receiveMessages(&metaData, &message);
 
     // receive done
     receiveMessages(&metaData, &message);
 
     waitChild(cpCount);
-    //closeParentPipes(&processesPipes[0], procCount);
     closePipes(&processesPipes, procCount);
     fclose(pipesLogs);
     return 0;
 }
 
 
-void createChild(MetaData *metaData, ProcessPipes processesPipes) {
+void createChild(MetaData *metaData, ProcessPipes childrenPipes[]) {
     for (int i = 1; i < metaData->procCount; ++i) {
         metaData->localId = i;
-        metaData->pipesData = processesPipes;
+        metaData->pipesData = childrenPipes[0];
         fflush(stdout);
         if (fork() == 0) {
+            /*for (int j = 0; j <metaData->procCount; ++j) {
+                if (i != j) {
+                    closePipes(&childrenPipes[j], metaData->procCount);
+                }
+            }*/
             run(metaData);
         }
     }
