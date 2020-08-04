@@ -6,7 +6,7 @@ void buildMessage(Message *, char *, MessageType);
 
 void receiveMessages(MetaData *, Message *);
 
-void createChild(MetaData *);
+void createBranch(MetaData *);
 
 void run(MetaData *);
 
@@ -18,6 +18,12 @@ int main(int argc, char *argv[]) {
     pipesLogs = fopen(pipes_log, "w");
 
     int cpCount = (int) strtol(argv[2], NULL, 10);
+    balance_t branchBalances[cpCount];
+    for (int i = 1; i <= cpCount; ++i) {
+        branchBalances[i] = strtol(argv[i + 2], NULL, 10);
+    }
+
+
     int procCount = cpCount + 1;
 
     ProcessPipes processesPipes;
@@ -27,7 +33,7 @@ int main(int argc, char *argv[]) {
     metaData.procCount = procCount;
     metaData.pipesData = processesPipes;
 
-    createChild(&metaData);
+    createBranch(&metaData);
     closeOtherParentDescriptors(&metaData.pipesData, procCount);
 
     Message message;
@@ -47,7 +53,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-void createChild(MetaData *metaData) {
+void createBranch(MetaData *metaData) {
     for (int i = 1; i < metaData->procCount; ++i) {
         metaData->localId = i;
         fflush(stdout);
