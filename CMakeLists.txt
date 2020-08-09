@@ -26,5 +26,3 @@ add_executable(test src/learnC/testProg.c)
 add_executable(twoPipes src/learnC/twoPipes.c)
 
 add_executable(morina src/morinaLab/ipc.c src/morinaLab/main.c src/morinaLab/process.c src/morinaLab/utils.c)
-
-add_executable(lab2 src/pa2/main.c src/pa2/logs.c src/pa2/pipes.c src/pa2/ipc.c)

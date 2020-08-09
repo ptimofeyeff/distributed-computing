@@ -1,16 +1,4 @@
 #include "main.h"
-#include "logs.h"
-#include "pipes.h"
-
-void buildMessage(Message *, char *, MessageType);
-
-void receiveMessages(MetaData *, Message *);
-
-void createBranch(MetaData *);
-
-void run(MetaData *);
-
-void waitChild(int count);
 
 int main(int argc, char *argv[]) {
 
@@ -26,89 +14,36 @@ int main(int argc, char *argv[]) {
 
     int procCount = cpCount + 1;
 
-    ProcessPipes processesPipes;
-    openPipes(&processesPipes, procCount); // инициализированная полная матрица пайпов
+    BranchDescriptors branchDescriptors; // матрица дескрипторов
+    openPipes(&branchDescriptors, procCount);
 
-    MetaData metaData;
-    metaData.procCount = procCount;
-    metaData.pipesData = processesPipes;
+    BranchData branchData;
+    branchData.branchCount = procCount;
+    branchData.descriptors = branchDescriptors;
 
-    createBranch(&metaData);
-    closeOtherParentDescriptors(&metaData.pipesData, procCount);
+    createBranch(&branchData, branchBalances);
+    closeOtherParentDescriptors(&branchData.descriptors, procCount);
+
+    branchData.id = PARENT_ID;
+    branchData.descriptors = branchDescriptors;
 
     Message message;
 
     // receive started
-    metaData.localId = PARENT_ID;
-    metaData.pipesData = processesPipes;
-    receiveMessages(&metaData, &message);
+    receiveMessages(&branchData, &message);
+
+    //bank_robbery(, cpCount);
+
+    //TODO: send STOP to every branches
 
     // receive done
-    receiveMessages(&metaData, &message);
+    receiveMessages(&branchData, &message);
+
+    // TODO: receive balance history from every branch and call print_history()
+
 
     waitChild(cpCount);
-    closePipes(&processesPipes, procCount, PARENT_ID);
+    closePipes(&branchDescriptors, procCount, PARENT_ID);
     fclose(pipesLogs);
     return 0;
-}
-
-
-void createBranch(MetaData *metaData) {
-    for (int i = 1; i < metaData->procCount; ++i) {
-        metaData->localId = i;
-        fflush(stdout);
-        if (fork() == 0) {
-            closeOtherChildDescriptors(&metaData->pipesData, i, metaData->procCount);
-            run(metaData);
-        }
-    }
-}
-
-
-void run(MetaData *metaData) {
-    char payload[MAX_PAYLOAD_LEN];
-
-    Message startMessage;
-    logStarted(metaData->localId, payload);
-    buildMessage(&startMessage, payload, STARTED);
-    send_multicast(metaData, &startMessage);
-
-    Message startReceiver;
-    receiveMessages(metaData, &startReceiver);
-    logReceiveStart(metaData->localId, payload);
-
-    Message doneMessage;
-    logDone(metaData->localId, payload);
-    buildMessage(&doneMessage, payload, DONE);
-    send_multicast(metaData, &doneMessage);
-
-    Message doneReceiver;
-    receiveMessages(metaData, &doneReceiver);
-    logReceiveDone(metaData->localId, payload);
-
-    closePipes(&metaData->pipesData, metaData->procCount, metaData->localId);
-    exit(0);
-}
-
-void waitChild(int cpCount) {
-    for (int i = 0; i < cpCount; i++) {
-        wait(NULL);
-    }
-}
-
-void buildMessage(Message *message, char *payload, MessageType type) {
-    message->s_header.s_magic = MESSAGE_MAGIC;
-    message->s_header.s_type = type;
-    message->s_header.s_local_time = time(NULL);
-    message->s_header.s_payload_len = strlen(payload);
-    strcpy(message->s_payload, payload);
-}
-
-void receiveMessages(MetaData *metaData, Message *message) {
-    for (int i = 1; i < metaData->procCount; ++i) {
-        if (i != metaData->localId) {
-            receive(metaData, i, message);
-            //printMessage(message, metaData->localId);
-        }
-    }
 }
