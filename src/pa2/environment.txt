@@ -1,0 +1,2 @@
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:."
+LD_PRELOAD=libruntime.so ./pa2 –p 2 10 20

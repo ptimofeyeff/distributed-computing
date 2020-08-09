@@ -6,3 +6,6 @@ src/morinaLab
 .idea
 *.log
 *.out
+*.so
+/src/pa2/pa2
+*.gz
