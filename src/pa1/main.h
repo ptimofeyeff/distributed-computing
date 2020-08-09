@@ -1,4 +1,4 @@
-#ifndef LAB1_MAIN_H
+#ifndef LAB1_PA23_H
 #define LAB1_MAIN_H
 
 #include <stdlib.h>
@@ -25,4 +25,4 @@ typedef struct {
     local_id localId;
 } MetaData;
 
-#endif //LAB1_MAIN_H
+#endif //LAB1_PA23_H

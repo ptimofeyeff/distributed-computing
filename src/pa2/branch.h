@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-#include "common/ipc.h"
+#include "ipc.h"
 #include "logs.h"
 
 #define DESC_COUNT 2

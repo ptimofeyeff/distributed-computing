@@ -1,5 +1,5 @@
-#include "common//ipc.h"
-#include "main.h"
+#include "ipc.h"
+#include "pa23.h"
 #include "stdio.h"
 #include <unistd.h>
 

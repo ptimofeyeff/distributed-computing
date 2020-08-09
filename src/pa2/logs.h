@@ -1,10 +1,10 @@
 #ifndef LAB1_LOGS_H
 #define LAB1_LOGS_H
 
-#include "common/ipc.h"
-#include "common/common.h"
-#include "pa2345_starter_code/pa2345.h"
-#include "pa2345_starter_code/banking.h"
+#include "ipc.h"
+#include "common.h"
+#include "pa2345.h"
+#include "banking.h"
 #include "stdio.h"
 #include <unistd.h>
 

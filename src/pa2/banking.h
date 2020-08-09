@@ -10,7 +10,7 @@
 #ifndef __IFMO_DISTRIBUTED_CLASS_BANKING__H
 #define __IFMO_DISTRIBUTED_CLASS_BANKING__H
 
-#include "../common/ipc.h"
+#include "ipc.h"
 
 typedef int16_t balance_t;
 

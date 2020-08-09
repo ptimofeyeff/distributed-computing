@@ -1,8 +1,8 @@
-make:
+make: clean
 	clang -o pa2 -std=c99 -Wall -pedantic *.c -L. -lruntime
-run:
+run: make
 	./pa2 -p 2 10 20
-tar:
-	tar -cvf pa2.tar.gz .
 clean:
-	rm *.log pa2 *.gz
+	-rm *.log pa2 *.gz
+tar: clean
+	cd .. && tar -czvf pa2.tar.gz pa2

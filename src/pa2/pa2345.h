@@ -10,8 +10,8 @@
 #ifndef __IFMO_DISTRIBUTED_CLASS_PA2345__H
 #define __IFMO_DISTRIBUTED_CLASS_PA2345__H
 
-#include "../common/common.h"
-#include "../common/ipc.h"
+#include "common.h"
+#include "ipc.h"
 
 /* 
  * <timestamp> process <local id> (pid <PID>, paranet <PID>) has STARTED with balance $<id>
