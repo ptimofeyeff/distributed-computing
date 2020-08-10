@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     Message message;
 
     // receive started
-    receiveMessages(&branchData, &message);
+    receiveFromAll(&branchData, &message);
 
     bank_robbery(&branchData.descriptors, cpCount);
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     //TODO: send STOP to every branches
 
     // receive done
-    receiveMessages(&branchData, &message);
+    receiveFromAll(&branchData, &message);
 
     // TODO: receive balance history from every branch and call print_history()
 

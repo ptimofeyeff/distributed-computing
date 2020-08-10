@@ -17,3 +17,12 @@ void buildTransferMessage(Message *message, TransferOrder *transferOrder) {
     message->s_header.s_payload_len = sizeof *transferOrder;
     memcpy(message->s_payload, transferOrder, sizeof *transferOrder);
 }
+
+void receiveFromAll(BranchData *branchData, Message *message) {
+    for (int i = 1; i < branchData->branchCount; ++i) {
+        if (i != branchData->id) {
+            receive(branchData, i, message);
+            //printMessage(message, metaData->localId);
+        }
+    }
+}

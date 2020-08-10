@@ -6,7 +6,6 @@
 
 #include "ipc.h"
 #include "logs.h"
-#include "messageUtils.h"
 
 #define DESC_COUNT 2
 #define READ_DESC 0
@@ -23,8 +22,6 @@ typedef struct {
     local_id id;
     balance_t balance;
 } BranchData;
-
-void receiveMessages(BranchData *, Message *);
 
 void createBranch(BranchData *, const balance_t[]);
 

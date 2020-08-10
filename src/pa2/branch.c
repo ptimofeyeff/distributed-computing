@@ -1,5 +1,6 @@
 #include "branch.h"
 #include "pipes.h"
+#include "messageUtils.h"
 
 void createBranch(BranchData *branchData, const balance_t balances[]) {
     for (int i = 1; i < branchData->branchCount; ++i) {
@@ -23,13 +24,13 @@ void run(BranchData *branchData) {
     send_multicast(branchData, &startMessage);
 
     Message startReceiver;
-    receiveMessages(branchData, &startReceiver);
+    receiveFromAll(branchData, &startReceiver);
     logReceiveStart(branchData->id, payload, get_physical_time());
 
     // TODO полезная работа
     Message transferOrStop;
 
-    receiveMessages(branchData, &transferOrStop);
+    receiveFromAll(branchData, &transferOrStop);
     if (transferOrStop.s_header.s_type == TRANSFER) {
 
     }
@@ -45,7 +46,7 @@ void run(BranchData *branchData) {
     send_multicast(branchData, &doneMessage);
 
     Message doneReceiver;
-    receiveMessages(branchData, &doneReceiver);
+    receiveFromAll(branchData, &doneReceiver);
     logReceiveDone(branchData->id, payload, get_physical_time());
 
     closePipes(branchData->descriptors, branchData->branchCount, branchData->id);
@@ -55,15 +56,5 @@ void run(BranchData *branchData) {
 void waitChild(int cpCount) {
     for (int i = 0; i < cpCount; i++) {
         wait(NULL);
-    }
-}
-
-
-void receiveMessages(BranchData *branchData, Message *message) {
-    for (int i = 1; i < branchData->branchCount; ++i) {
-        if (i != branchData->id) {
-            receive(branchData, i, message);
-            //printMessage(message, metaData->localId);
-        }
     }
 }
