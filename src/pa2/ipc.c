@@ -10,7 +10,8 @@ int send(void *self, local_id destination, const Message *message) {
     printf("in proc %d try to send from %d to %d by descriptor = %d\n",
            branchData->id, from, to, branchData->descriptors.descriptors[from][to][WRITE_DESC]);
     fflush(stdout);
-    size_t result = write(branchData->descriptors.descriptors[from][to][WRITE_DESC], message, sizeof *message);
+    size_t result = write(branchData->descriptors.descriptors[from][to][WRITE_DESC], message,
+                          sizeof(message->s_header) + message->s_header.s_payload_len);
     if (result != EXIT_FAILURE) { // по значению результата можно смотерть сколько байтов переслалось
         printf("in proc %d success send from %d to %d by descriptor = %d\n",
                branchData->id, from, to, branchData->descriptors.descriptors[from][to][WRITE_DESC]);
