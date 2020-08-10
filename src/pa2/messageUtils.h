@@ -7,6 +7,8 @@ void buildEmptyMessage(Message *, char *, MessageType);
 
 void buildTransferMessage(Message *, TransferOrder *);
 
+void buildAckMessage(Message *);
+
 void receiveFromAll(BranchData *, Message *);
 
 #endif //LAB1_MESSAGEUTILS_H

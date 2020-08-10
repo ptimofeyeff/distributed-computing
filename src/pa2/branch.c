@@ -27,16 +27,23 @@ void run(BranchData *branchData) {
     receiveFromAll(branchData, &startReceiver);
     logReceiveStart(branchData->id, payload, get_physical_time());
 
-    // TODO полезная работа
-    Message transferOrStop;
-
-    receiveFromAll(branchData, &transferOrStop);
-    if (transferOrStop.s_header.s_type == TRANSFER) {
-
-    }
-
-    if (transferOrStop.s_header.s_type == STOP) {
-
+    Message workMessage;
+    int isWork = 1;
+    while (isWork) {
+        receive_any(branchData, &workMessage);
+        if (workMessage.s_header.s_type == TRANSFER) {
+            TransferOrder transferOrder;
+            memcpy(&transferOrder, workMessage.s_payload, workMessage.s_header.s_payload_len);
+            if (transferOrder.s_dst == branchData->id) {
+                Message ackMessage;
+                buildAckMessage(&ackMessage);
+                send(branchData, PARENT_ID, &ackMessage);
+            } else {
+                send(branchData, transferOrder.s_dst, &workMessage);
+            }
+        } else if (workMessage.s_header.s_type == STOP) {
+            isWork = 0;
+        }
     }
 
 
