@@ -48,6 +48,22 @@ void logCloseDescriptor(int fd, local_id id) {
     fflush(stdout);
 }
 
+void logTransferIn(timestamp_t timestamp, local_id src, balance_t amount, local_id dst, char * transferInMsg) {
+    sprintf(transferInMsg, log_transfer_in_fmt, timestamp, dst, amount, src);
+    fprintf(eventsLogs, "%s", transferInMsg);
+    fflush(eventsLogs);
+    printf("%s", transferInMsg);
+    fflush(stdout);
+}
+
+void logTransferOut(timestamp_t timestamp, local_id src, balance_t amount, local_id dst, char *transferOutMsg) {
+    sprintf(transferOutMsg, log_transfer_out_fmt, timestamp, src, amount, dst);
+    fprintf(eventsLogs, "%s", transferOutMsg);
+    fflush(eventsLogs);
+    printf("%s", transferOutMsg);
+    fflush(stdout);
+}
+
 
 void printMessage(Message *message, local_id id) {
     printf("\n\nprocess with id %d receive:\n"

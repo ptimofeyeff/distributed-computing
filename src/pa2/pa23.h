@@ -3,5 +3,6 @@
 
 #include "branch.h"
 #include "pipes.h"
+#include "messageUtils.h"
 
 #endif //LAB1_PA23_H

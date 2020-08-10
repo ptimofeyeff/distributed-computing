@@ -1,13 +1,12 @@
 #ifndef LAB1_BRANCH_H
 #define LAB1_BRANCH_H
 
-#include <time.h>
-#include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
 #include "ipc.h"
 #include "logs.h"
+#include "messageUtils.h"
 
 #define DESC_COUNT 2
 #define READ_DESC 0
@@ -19,13 +18,11 @@ typedef struct {
 } BranchDescriptors;
 
 typedef struct {
-    BranchDescriptors descriptors;
+    BranchDescriptors *descriptors;
     int branchCount;
     local_id id;
     balance_t balance;
 } BranchData;
-
-void buildMessage(Message *, char *, MessageType);
 
 void receiveMessages(BranchData *, Message *);
 

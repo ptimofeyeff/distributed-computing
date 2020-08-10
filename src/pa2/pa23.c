@@ -1,9 +1,21 @@
 #include "pa23.h"
 
-void transfer(void * parent_data, local_id src, local_id dst,
-              balance_t amount)
-{
-    // student, please implement me
+void transfer(void * parent_data, local_id src, local_id dst, balance_t amount) {
+    Message transfer;
+
+    TransferOrder transferOrder;
+    transferOrder.s_amount = amount;
+    transferOrder.s_src = src;
+    transferOrder.s_dst = dst;
+    buildTransferMessage(&transfer, &transferOrder);
+
+    BranchData branchData;
+    BranchDescriptors *parentDescriptors = (BranchDescriptors *) parent_data;
+    branchData.descriptors = parentDescriptors;
+    branchData.id = src;
+
+    send(&branchData, dst, &transfer);
+    logTransferOut(get_physical_time(), src, amount, dst, transfer.s_payload);
 }
 
 int main(int argc, char *argv[]) {
@@ -25,20 +37,22 @@ int main(int argc, char *argv[]) {
 
     BranchData branchData;
     branchData.branchCount = procCount;
-    branchData.descriptors = branchDescriptors;
+    branchData.descriptors = &branchDescriptors;
 
     createBranch(&branchData, branchBalances);
-    closeOtherParentDescriptors(&branchData.descriptors, procCount);
+    closeOtherParentDescriptors(branchData.descriptors, procCount);
 
     branchData.id = PARENT_ID;
-    branchData.descriptors = branchDescriptors;
+    branchData.descriptors = &branchDescriptors;
 
     Message message;
 
     // receive started
     receiveMessages(&branchData, &message);
 
-    //bank_robbery(, cpCount);
+    bank_robbery(&branchData.descriptors, cpCount);
+
+    // receive ACK from Cdst
 
     //TODO: send STOP to every branches
 
