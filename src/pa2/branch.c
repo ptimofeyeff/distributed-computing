@@ -1,6 +1,6 @@
 #include "branch.h"
-#include "pipes.h"
-#include "messageUtils.h"
+#include "descriptors.h"
+#include "message.h"
 
 void createBranch(BranchData *branchData, const balance_t balances[]) {
     for (int i = 1; i < branchData->branchCount; ++i) {

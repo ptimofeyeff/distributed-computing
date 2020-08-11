@@ -2,7 +2,7 @@
 #define LAB1_PA23_H
 
 #include "branch.h"
-#include "pipes.h"
-#include "messageUtils.h"
+#include "descriptors.h"
+#include "message.h"
 
 #endif //LAB1_PA23_H

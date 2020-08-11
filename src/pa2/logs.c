@@ -1,5 +1,5 @@
 #include "logs.h"
-#include "pipes.h"
+#include "descriptors.h"
 
 
 void logStarted(local_id id, char *startedMessage, timestamp_t timestamp, balance_t balance ) {

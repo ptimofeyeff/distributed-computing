@@ -1,4 +1,4 @@
-#ifndef LAB1_PIPES_H
+#ifndef LAB1_DESCRIPTORS_H
 #define LAB1_PIPES_H
 
 #include "main.h"
@@ -15,4 +15,4 @@ void closeOtherChildDescriptors(ProcessPipes *, local_id id, int);
 
 void closeOtherParentDescriptors(ProcessPipes *, int);
 
-#endif //LAB1_PIPES_H
+#endif //LAB1_DESCRIPTORS_H

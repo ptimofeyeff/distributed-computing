@@ -4,18 +4,23 @@ void transfer(void * parent_data, local_id src, local_id dst, balance_t amount) 
     Message transfer;
 
     TransferOrder transferOrder;
-    transferOrder.s_amount = amount;
     transferOrder.s_src = src;
     transferOrder.s_dst = dst;
+    transferOrder.s_amount = amount;
     buildTransferMessage(&transfer, &transferOrder);
 
-    BranchData branchData;
-    BranchDescriptors *parentDescriptors = (BranchDescriptors *) parent_data;
-    branchData.descriptors = parentDescriptors;
-    branchData.id = src;
-
-    send(&branchData, dst, &transfer);
+    send(parent_data, src, &transfer);
     logTransferOut(get_physical_time(), src, amount, dst, transfer.s_payload);
+    Message ackMessage;
+
+    while (1) {
+        if (receive(parent_data, dst, &ackMessage) == 0) {
+            break;
+        }
+    }
+    printf("receive ack from %d", dst);
+    fflush(stdout);
+
 }
 
 int main(int argc, char *argv[]) {
@@ -32,8 +37,9 @@ int main(int argc, char *argv[]) {
 
     int procCount = cpCount + 1;
 
-    BranchDescriptors branchDescriptors; // матрица дескрипторов
+    BranchDescriptors branchDescriptors;
     openPipes(&branchDescriptors, procCount);
+    setNonBlocking(&branchDescriptors, procCount);
 
     BranchData branchData;
     branchData.branchCount = procCount;
@@ -43,18 +49,21 @@ int main(int argc, char *argv[]) {
     closeOtherParentDescriptors(branchData.descriptors, procCount);
 
     branchData.id = PARENT_ID;
-    branchData.descriptors = &branchDescriptors;
+    branchData.descriptors = &branchDescriptors; // may redundant line
 
     Message message;
 
     // receive started
     receiveFromAll(&branchData, &message);
+    logReceiveStart(PARENT_ID, message.s_payload, get_physical_time());
 
-    bank_robbery(&branchData.descriptors, cpCount);
+    bank_robbery(&branchData, cpCount);
 
-    // receive ACK from Cdst
+    Message stopMessage;
 
-    //TODO: send STOP to every branches
+    buildStopMessage(&stopMessage);
+
+    send_multicast(&branchData, &stopMessage);
 
     // receive done
     receiveFromAll(&branchData, &message);
