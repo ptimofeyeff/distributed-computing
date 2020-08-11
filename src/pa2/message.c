@@ -31,7 +31,14 @@ void buildStopMessage(Message *message) {
     message->s_header.s_local_time = get_physical_time();
 }
 
-// should be blocking while we not receive msg from all process
+void buildHistoryMessage(Message *message, BalanceHistory *balanceHistory) {
+    message->s_header.s_magic = MESSAGE_MAGIC;
+    message->s_header.s_type = BALANCE_HISTORY;
+    message->s_header.s_payload_len = sizeof *balanceHistory;
+    message->s_header.s_local_time = get_physical_time();
+    memcpy(message->s_payload, balanceHistory, sizeof *balanceHistory);
+}
+
 void receiveFromAll(BranchData *branchData, Message *message) {
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (i != branchData->id) {
@@ -39,6 +46,7 @@ void receiveFromAll(BranchData *branchData, Message *message) {
                 if (receive(branchData, i, message) == 0) {
                     break;
                 }
+                //sleep(1);
             }
         }
     }

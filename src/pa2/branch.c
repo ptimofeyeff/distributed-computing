@@ -27,23 +27,47 @@ void run(BranchData *branchData) {
     receiveFromAll(branchData, &startReceiver);
     logReceiveStart(branchData->id, payload, get_physical_time());
 
-    Message workMessage;
+
+    BalanceHistory balanceHistory;
+    balanceHistory.s_id = branchData->id;
+    BalanceState startBalance;
+    startBalance.s_balance = branchData->balance;
+    startBalance.s_balance_pending_in = 0;
+    startBalance.s_time = get_physical_time();
+    balanceHistory.s_history[0] = startBalance; // затем индекс можно сделать функцией get_physical_time();
+
     int isWork = 1;
+    int workCounter = 1;
     while (isWork) {
+        Message workMessage;
         receive_any(branchData, &workMessage);
         if (workMessage.s_header.s_type == TRANSFER) {
             TransferOrder transferOrder;
             memcpy(&transferOrder, workMessage.s_payload, workMessage.s_header.s_payload_len);
-            if (transferOrder.s_dst == branchData->id) {
+            if (transferOrder.s_src == branchData->id) {
+                branchData->balance -= transferOrder.s_amount;
+                BalanceState balanceState;
+                balanceState.s_balance_pending_in = 0;
+                balanceState.s_balance = branchData->balance;
+                balanceState.s_time = get_physical_time();
+                balanceHistory.s_history[workCounter] = balanceState;
+
+                send(branchData, transferOrder.s_dst, &workMessage);
+            } else {
+                branchData->balance += transferOrder.s_amount;
+                BalanceState balanceState;
+                balanceState.s_balance_pending_in = 0;
+                balanceState.s_balance = branchData->balance;
+                balanceState.s_time = get_physical_time();
+                balanceHistory.s_history[workCounter] = balanceState;
                 Message ackMessage;
                 buildAckMessage(&ackMessage);
                 send(branchData, PARENT_ID, &ackMessage);
-            } else {
-                send(branchData, transferOrder.s_dst, &workMessage);
             }
         } else if (workMessage.s_header.s_type == STOP) {
             isWork = 0;
         }
+        workCounter++;
     }
 
 
@@ -55,6 +79,10 @@ void run(BranchData *branchData) {
     Message doneReceiver;
     receiveFromAll(branchData, &doneReceiver);
     logReceiveDone(branchData->id, payload, get_physical_time());
+
+    Message historyMessage;
+    buildHistoryMessage(&historyMessage, &balanceHistory);
+    send(&branchData, PARENT_ID, &historyMessage);
 
     closePipes(branchData->descriptors, branchData->branchCount, branchData->id);
     exit(0);

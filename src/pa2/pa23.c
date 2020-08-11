@@ -17,10 +17,8 @@ void transfer(void * parent_data, local_id src, local_id dst, balance_t amount) 
         if (receive(parent_data, dst, &ackMessage) == 0) {
             break;
         }
+        //sleep(1);
     }
-    printf("receive ack from %d", dst);
-    fflush(stdout);
-
 }
 
 int main(int argc, char *argv[]) {
@@ -68,8 +66,20 @@ int main(int argc, char *argv[]) {
     // receive done
     receiveFromAll(&branchData, &message);
 
-    // TODO: receive balance history from every branch and call print_history()
+    Message balanceMsg[procCount];
 
+    AllHistory allHistory;
+    allHistory.s_history_len = cpCount;
+    for (int i = 1; i < procCount; ++i) {
+        receive(&branchData, i, &balanceMsg[i]);
+    }
+    for (int i = 0; i < cpCount; ++i) {
+        BalanceHistory balanceHistory;
+        memcpy(&balanceHistory, &balanceMsg[i + 1], balanceMsg[i + 1].s_header.s_payload_len);
+        allHistory.s_history[i] = balanceHistory;
+    }
+
+    //print_history(&allHistory);
 
     waitChild(cpCount);
     closePipes(&branchDescriptors, procCount, PARENT_ID);
