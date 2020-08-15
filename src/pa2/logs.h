@@ -27,9 +27,9 @@ void logOpenDescriptor(int, char *, int, int);
 
 void logCloseDescriptor(int, local_id);
 
-void logTransferIn(timestamp_t, local_id src, balance_t, local_id dst, char *);
+void logTransferIn(timestamp_t, local_id src, balance_t, local_id dst);
 
-void logTransferOut(timestamp_t, local_id src, balance_t, local_id dst, char *);
+void logTransferOut(timestamp_t, local_id src, balance_t, local_id dst);
 
 void printMessage(Message *message, local_id id);
 

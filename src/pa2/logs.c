@@ -48,19 +48,17 @@ void logCloseDescriptor(int fd, local_id id) {
     fflush(stdout);
 }
 
-void logTransferIn(timestamp_t timestamp, local_id src, balance_t amount, local_id dst, char * transferInMsg) {
-    sprintf(transferInMsg, log_transfer_in_fmt, timestamp, dst, amount, src);
-    fprintf(eventsLogs, "%s", transferInMsg);
+void logTransferIn(timestamp_t timestamp, local_id src, balance_t amount, local_id dst) {
+    fprintf(eventsLogs, log_transfer_in_fmt, timestamp, dst, amount, src);
     fflush(eventsLogs);
-    printf("%s", transferInMsg);
+    printf(log_transfer_in_fmt, timestamp, src, amount, dst);
     fflush(stdout);
 }
 
-void logTransferOut(timestamp_t timestamp, local_id src, balance_t amount, local_id dst, char *transferOutMsg) {
-    sprintf(transferOutMsg, log_transfer_out_fmt, timestamp, src, amount, dst);
-    fprintf(eventsLogs, "%s", transferOutMsg);
+void logTransferOut(timestamp_t timestamp, local_id src, balance_t amount, local_id dst) {
+    fprintf(eventsLogs, log_transfer_out_fmt, timestamp, src, amount, dst);
     fflush(eventsLogs);
-    printf("%s", transferOutMsg);
+    printf(log_transfer_out_fmt, timestamp, src, amount, dst);
     fflush(stdout);
 }
 

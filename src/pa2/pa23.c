@@ -10,7 +10,6 @@ void transfer(void * parent_data, local_id src, local_id dst, balance_t amount) 
     buildTransferMessage(&transfer, &transferOrder);
 
     send(parent_data, src, &transfer);
-    logTransferOut(get_physical_time(), src, amount, dst, transfer.s_payload);
     Message ackMessage;
 
     while (1) {

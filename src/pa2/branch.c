@@ -40,6 +40,7 @@ void run(BranchData *branchData) {
 
     int isWork = 1;
     int workCounter = 1;
+
     while (isWork) {
         Message workMessage;
         receive_any(branchData, &workMessage);
@@ -47,7 +48,10 @@ void run(BranchData *branchData) {
             TransferOrder transferOrder;
             memcpy(&transferOrder, workMessage.s_payload, workMessage.s_header.s_payload_len);
             if (transferOrder.s_src == branchData->id) {
+
                 branchData->balance -= transferOrder.s_amount;
+                logTransferOut(get_physical_time(), branchData->id, transferOrder.s_amount, transferOrder.s_dst);
+
                 BalanceState balanceState;
                 balanceState.s_balance_pending_in = 0;
                 balanceState.s_balance = branchData->balance;
@@ -56,7 +60,10 @@ void run(BranchData *branchData) {
 
                 send(branchData, transferOrder.s_dst, &workMessage);
             } else {
+
                 branchData->balance += transferOrder.s_amount;
+                logTransferIn(get_physical_time(), transferOrder.s_src, transferOrder.s_amount, branchData->id);
+
                 BalanceState balanceState;
                 balanceState.s_balance_pending_in = 0;
                 balanceState.s_balance = branchData->balance;
@@ -65,6 +72,7 @@ void run(BranchData *branchData) {
                 Message ackMessage;
                 buildAckMessage(&ackMessage);
                 send(branchData, PARENT_ID, &ackMessage);
+
             }
         } else if (workMessage.s_header.s_type == STOP) {
             isWork = 0;
