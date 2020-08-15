@@ -47,7 +47,6 @@ void receiveFromAll(BranchData *branchData, Message *message) {
                 if (receive(branchData, i, message) == 0) {
                     break;
                 }
-                //sleep(1);
             }
         }
     }

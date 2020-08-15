@@ -3,6 +3,8 @@
 
 #include "banking.h"
 
-void buildBalanceState(BalanceState *, local_id, balance_t);
+void buildBalanceState(BalanceState *, balance_t);
+
+void commitBalanceState(BalanceState *, BalanceHistory *, timestamp_t, timestamp_t);
 
 #endif //LAB1_HISTORY_H

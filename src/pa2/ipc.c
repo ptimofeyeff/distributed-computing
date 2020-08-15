@@ -47,9 +47,9 @@ int receive(void *self, local_id sender, Message *message) {
     int header = read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_header, sizeof (message->s_header));
 
     if (header > 0) {
-        int body = read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_payload, message->s_header.s_payload_len);
-        printf("in proc %d success receive %d byte from %d to %d message type %d\n",
-               branchData->id, body, from, to, message->s_header.s_type); // may 0 byte, why?!
+        read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_payload, message->s_header.s_payload_len);
+        //printf("in proc %d success receive %d byte from %d to %d message type %d\n",
+          //     branchData->id, body, from, to, message->s_header.s_type); // may 0 byte, why?!
         fflush(stdout);
         return 0;
     } else {
@@ -70,8 +70,6 @@ int receive_any(void *self, Message *message) {
             if (i != branchData->id) {
                 int result = receive(self, i, message);
                 if (result == 0) {
-                    printf("success receive any from proc %d\n", i);
-                    fflush(stdout);
                     return 0;
                 }
             }
