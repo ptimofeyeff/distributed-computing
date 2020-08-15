@@ -39,6 +39,7 @@ void buildHistoryMessage(Message *message, BalanceHistory *balanceHistory) {
     memcpy(message->s_payload, balanceHistory, sizeof *balanceHistory);
 }
 
+// "синхронная" функция получения сообщений от всех процессов
 void receiveFromAll(BranchData *branchData, Message *message) {
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (i != branchData->id) {

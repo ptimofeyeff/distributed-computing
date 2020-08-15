@@ -27,6 +27,8 @@ void run(BranchData *branchData) {
     receiveFromAll(branchData, &startReceiver);
     logReceiveStart(branchData->id, payload, get_physical_time());
 
+    printf("PROC %d START WORKING----------------------------------------------\n", branchData->id);
+    fflush(stdout);
 
     BalanceHistory balanceHistory;
     balanceHistory.s_id = branchData->id;

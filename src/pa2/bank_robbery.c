@@ -17,4 +17,6 @@ void bank_robbery(void * parent_data, local_id max_id)
     if (max_id > 1) {
         transfer(parent_data, max_id, 1, 1);
     }
+
+    //transfer(parent_data, 1, 2, 5); // test transfer
 }

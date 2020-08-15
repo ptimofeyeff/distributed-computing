@@ -55,6 +55,9 @@ int main(int argc, char *argv[]) {
     receiveFromAll(&branchData, &message);
     logReceiveStart(PARENT_ID, message.s_payload, get_physical_time());
 
+    printf("PARENT START WORKING----------------------------------------------\n");
+    fflush(stdout);
+
     bank_robbery(&branchData, cpCount);
 
     Message stopMessage;
