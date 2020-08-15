@@ -32,11 +32,10 @@ void run(BranchData *branchData) {
 
     BalanceHistory balanceHistory;
     balanceHistory.s_id = branchData->id;
+
     BalanceState startBalance;
-    startBalance.s_balance = branchData->balance;
-    startBalance.s_balance_pending_in = 0;
-    startBalance.s_time = get_physical_time();
-    balanceHistory.s_history[0] = startBalance; // затем индекс можно сделать функцией get_physical_time();
+    buildBalanceState(&startBalance, branchData->id, branchData->balance);
+    balanceHistory.s_history[0] = startBalance;
 
     int isWork = 1;
     int workCounter = 1;
@@ -44,6 +43,7 @@ void run(BranchData *branchData) {
     while (isWork) {
         Message workMessage;
         receive_any(branchData, &workMessage);
+
         if (workMessage.s_header.s_type == TRANSFER) {
             TransferOrder transferOrder;
             memcpy(&transferOrder, workMessage.s_payload, workMessage.s_header.s_payload_len);
@@ -53,9 +53,7 @@ void run(BranchData *branchData) {
                 logTransferOut(get_physical_time(), branchData->id, transferOrder.s_amount, transferOrder.s_dst);
 
                 BalanceState balanceState;
-                balanceState.s_balance_pending_in = 0;
-                balanceState.s_balance = branchData->balance;
-                balanceState.s_time = get_physical_time();
+                buildBalanceState(&balanceState, branchData->id, branchData->balance);
                 balanceHistory.s_history[workCounter] = balanceState;
 
                 send(branchData, transferOrder.s_dst, &workMessage);
@@ -65,14 +63,12 @@ void run(BranchData *branchData) {
                 logTransferIn(get_physical_time(), transferOrder.s_src, transferOrder.s_amount, branchData->id);
 
                 BalanceState balanceState;
-                balanceState.s_balance_pending_in = 0;
-                balanceState.s_balance = branchData->balance;
-                balanceState.s_time = get_physical_time();
+                buildBalanceState(&balanceState, branchData->id, branchData->balance);
                 balanceHistory.s_history[workCounter] = balanceState;
+
                 Message ackMessage;
                 buildAckMessage(&ackMessage);
                 send(branchData, PARENT_ID, &ackMessage);
-
             }
         } else if (workMessage.s_header.s_type == STOP) {
             isWork = 0;

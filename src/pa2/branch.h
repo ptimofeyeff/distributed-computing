@@ -7,6 +7,7 @@
 
 #include "ipc.h"
 #include "logs.h"
+#include "history.h"
 
 #define DESC_COUNT 2
 #define READ_DESC 0
