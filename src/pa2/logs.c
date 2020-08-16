@@ -37,15 +37,15 @@ void logReceiveDone(local_id id, char *receiveDoneMsg, timestamp_t timestamp) {
 void logOpenDescriptor(int fd, char *type, int from, int to) {
     fprintf(pipesLogs, log_open_pipe_descr, fd, type, from, to);
     fflush(pipesLogs);
-    printf(log_open_pipe_descr, fd, type, from, to);
-    fflush(stdout);
+    //printf(log_open_pipe_descr, fd, type, from, to);
+    //fflush(stdout);
 }
 
 void logCloseDescriptor(int fd, local_id id) {
     fprintf(pipesLogs, log_close_pipe_descr, fd, id);
     fflush(pipesLogs);
-    printf(log_close_pipe_descr, fd, id);
-    fflush(stdout);
+    //printf(log_close_pipe_descr, fd, id);
+    //fflush(stdout);
 }
 
 void logTransferIn(timestamp_t timestamp, local_id src, balance_t amount, local_id dst) {

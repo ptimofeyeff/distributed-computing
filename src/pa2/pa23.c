@@ -77,12 +77,10 @@ int main(int argc, char *argv[]) {
 
     AllHistory allHistory;
     allHistory.s_history_len = cpCount;
-
     for (int i = 0; i < cpCount; ++i) {
         BalanceHistory balanceHistory;
         memcpy(&balanceHistory, &balanceMsg[i + 1].s_payload, sizeof(BalanceHistory));
         allHistory.s_history[i] = balanceHistory;
-
     }
 
     print_history(&allHistory);
