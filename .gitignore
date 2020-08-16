@@ -8,4 +8,5 @@ src/morinaLab
 *.out
 *.so
 /src/pa2/pa2
+/src/pa3/pa3
 *.gz
