@@ -66,14 +66,19 @@ void run(BranchData *branchData) {
             }
         } else if (workMessage.s_header.s_type == STOP) {
             isWork = 0;
-            balanceHistory.s_history_len = lastCommitTime + 1;
+            balanceHistory.s_history_len = get_physical_time() + 1;
+            if (balanceHistory.s_history_len > (lastCommitTime + 1)) {
+                BalanceState  finalState;
+                buildBalanceState(&finalState, branchData->balance);
+                commitBalanceState(&finalState, &balanceHistory, lastCommitTime, finalState.s_time);
+            }
         }
     }
 
-    /*for (int i = 0; i < balanceHistory.s_history_len; ++i) {
+    for (int i = 0; i < balanceHistory.s_history_len; ++i) {
         printf("stat in branch %d: %d -> %d\n",
                branchData->id, balanceHistory.s_history[i].s_time, balanceHistory.s_history[i].s_balance);
-    }*/
+    }
 
 
     Message doneMessage;
