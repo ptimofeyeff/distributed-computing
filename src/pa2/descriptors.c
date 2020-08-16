@@ -7,6 +7,8 @@ void openPipes(BranchDescriptors *branchDescriptors, int procCount) {
                 pipe(branchDescriptors->descriptors[i][j]);
                 logOpenDescriptor(branchDescriptors->descriptors[i][j][READ_DESC], "reading", i, j);
                 logOpenDescriptor(branchDescriptors->descriptors[i][j][WRITE_DESC], "writing", i, j);
+                fcntl(branchDescriptors->descriptors[i][j][READ_DESC], F_SETFL, O_NONBLOCK);
+                fcntl(branchDescriptors->descriptors[i][j][WRITE_DESC], F_SETFL, O_NONBLOCK);
             }
         }
     }
@@ -68,15 +70,6 @@ void closeOtherChildDescriptors(BranchDescriptors *branchDescriptors, local_id i
                     }
                 }
             }
-        }
-    }
-}
-
-void setNonBlocking(BranchDescriptors *branchDescriptors, int procCount) {
-    for (int i = 0; i <procCount; ++i) {
-        for (int j = 0; j < procCount; ++j) {
-            fcntl(branchDescriptors->descriptors[i][j][READ_DESC], F_SETFL, O_NONBLOCK);
-            fcntl(branchDescriptors->descriptors[i][j][WRITE_DESC], F_SETFL, O_NONBLOCK);
         }
     }
 }

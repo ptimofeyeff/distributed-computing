@@ -16,6 +16,4 @@ void closeOtherChildDescriptors(BranchDescriptors *, local_id id, int);
 
 void closeOtherParentDescriptors(BranchDescriptors *, int);
 
-void setNonBlocking(BranchDescriptors *, int);
-
 #endif //LAB1_DESCRIPTORS_H

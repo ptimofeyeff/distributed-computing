@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
 
     BranchDescriptors branchDescriptors;
     openPipes(&branchDescriptors, procCount);
-    setNonBlocking(&branchDescriptors, procCount);
 
     BranchData branchData;
     branchData.branchCount = procCount;

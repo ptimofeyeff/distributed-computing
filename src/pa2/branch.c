@@ -75,12 +75,6 @@ void run(BranchData *branchData) {
         }
     }
 
-    for (int i = 0; i < balanceHistory.s_history_len; ++i) {
-        printf("stat in branch %d: %d -> %d\n",
-               branchData->id, balanceHistory.s_history[i].s_time, balanceHistory.s_history[i].s_balance);
-    }
-
-
     Message doneMessage;
     logDone(branchData->id, payload, get_physical_time(), branchData->balance);
     buildEmptyMessage(&doneMessage, payload, DONE);

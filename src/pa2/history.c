@@ -1,5 +1,4 @@
 #include "history.h"
-#include "stdio.h"
 
 void buildBalanceState(BalanceState *balanceState, balance_t balance) {
     balanceState->s_balance = balance;
