@@ -7,6 +7,7 @@
 #include "message.h"
 #include "history.h"
 #include "logs.h"
+#include "ipcx.h"
 
 void createBranch(TopologyDescriptors *descriptors, const balance_t balances[], int branchCount) {
     for (int i = 1; i < branchCount; ++i) {
@@ -36,13 +37,13 @@ void run(BranchData *branchData) {
     balanceHistory.s_history[0] = startBalance;
 
     Message startMessage;
-    logStarted(branchData->id, payload, get_physical_time(), branchData->balance);
+    logStarted(branchData->id, get_physical_time(), branchData->balance);
     buildEmptyMessage(&startMessage, payload, STARTED);
     send_multicast(branchData, &startMessage);
 
-    Message startReceiver;
-    receiveFromAll(branchData, &startReceiver);
-    logReceiveStart(branchData->id, payload, get_physical_time());
+    Message startMessages[branchData->branchCount];
+    syncReceiveFromAllChild(branchData, startMessages);
+    logReceiveStart(branchData->id, get_physical_time());
 
 
     while (isWork) {
@@ -84,13 +85,13 @@ void run(BranchData *branchData) {
     }
 
     Message doneMessage;
-    logDone(branchData->id, payload, get_physical_time(), branchData->balance);
     buildEmptyMessage(&doneMessage, payload, DONE);
+    logDone(branchData->id, get_physical_time(), branchData->balance);
     send_multicast(branchData, &doneMessage);
 
-    Message doneReceiver;
-    receiveFromAll(branchData, &doneReceiver);
-    logReceiveDone(branchData->id, payload, get_physical_time());
+    Message doneMessages[branchData->branchCount];
+    syncReceiveFromAllChild(branchData, doneMessages);
+    logReceiveDone(branchData->id, get_physical_time());
 
     Message historyMessage;
     buildHistoryMessage(&historyMessage, &balanceHistory);
@@ -104,4 +105,8 @@ void waitChild(int cpCount) {
     for (int i = 0; i < cpCount; i++) {
         wait(NULL);
     }
+}
+
+timestamp_t get_lamport_time() {
+    return logicTime;
 }

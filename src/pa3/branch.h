@@ -5,6 +5,8 @@
 #include "banking.h"
 #include "descriptors.h"
 
+timestamp_t logicTime;
+
 typedef struct {
     TopologyDescriptors *descriptors;
     int branchCount;
@@ -18,7 +20,6 @@ void createBranch(TopologyDescriptors *, const balance_t[], int);
 void run(BranchData *);
 
 void waitChild(int count);
-
 
 
 #endif //LAB1_BRANCH_H

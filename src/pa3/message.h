@@ -13,8 +13,6 @@ void buildAckMessage(Message *);
 
 void buildStopMessage(Message *);
 
-void receiveFromAll(BranchData *, Message *);
-
 void buildHistoryMessage(Message *, BalanceHistory *);
 
 #endif //LAB1_MESSAGE_H

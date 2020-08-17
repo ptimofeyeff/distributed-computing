@@ -2,36 +2,31 @@
 #include "logs.h"
 #include "pa2345.h"
 
-
-void logStarted(local_id id, char *startedMessage, timestamp_t timestamp, balance_t balance ) {
-    sprintf(startedMessage, log_started_fmt, timestamp, id, getpid(), getppid(), balance);
-    fprintf(eventsLogs, "%s", startedMessage);
+void logStarted(local_id id, timestamp_t timestamp, balance_t balance ) {
+    fprintf(eventsLogs, log_started_fmt, timestamp, id, getpid(), getppid(), balance);
     fflush(eventsLogs);
-    printf("%s", startedMessage);
+    printf(log_started_fmt, timestamp, id, getpid(), getppid(), balance);
     fflush(stdout);
 }
 
-void logDone(local_id id, char *doneMessage, timestamp_t timestamp, balance_t balance) {
-    sprintf(doneMessage, log_done_fmt, timestamp, id, balance);
-    fprintf(eventsLogs, "%s", doneMessage);
+void logDone(local_id id, timestamp_t timestamp, balance_t balance) {
+    fprintf(eventsLogs, log_done_fmt, timestamp, id, balance);
     fflush(eventsLogs);
-    printf("%s", doneMessage);
+    printf(log_done_fmt, timestamp, id, balance);
     fflush(stdout);
 }
 
-void logReceiveStart(local_id id, char *receiveStartMsg, timestamp_t timestamp) {
-    sprintf(receiveStartMsg, log_received_all_started_fmt, timestamp, id);
-    fprintf(eventsLogs, "%s", receiveStartMsg);
+void logReceiveStart(local_id id, timestamp_t timestamp) {
+    fprintf(eventsLogs, log_received_all_started_fmt, timestamp, id);
     fflush(eventsLogs);
-    printf("%s", receiveStartMsg);
+    printf(log_received_all_started_fmt, timestamp, id);
     fflush(stdout);
 }
 
-void logReceiveDone(local_id id, char *receiveDoneMsg, timestamp_t timestamp) {
-    sprintf(receiveDoneMsg, log_received_all_done_fmt, id, timestamp);
-    fprintf(eventsLogs, "%s", receiveDoneMsg);
+void logReceiveDone(local_id id, timestamp_t timestamp) {
+    fprintf(eventsLogs, log_received_all_done_fmt, timestamp, id);
     fflush(eventsLogs);
-    printf("%s", receiveDoneMsg);
+    printf(log_received_all_done_fmt, timestamp, id);
     fflush(stdout);
 }
 

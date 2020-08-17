@@ -6,7 +6,7 @@
 #include "logs.h"
 #include "branch.h"
 #include "message.h"
-
+#include "ipcx.h"
 
 void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
     Message transfer;
@@ -19,6 +19,7 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
 
     send(parent_data, src, &transfer);
     Message ackMessage;
+
 
     while (1) {
         if (receive(parent_data, dst, &ackMessage) == 0) {
@@ -44,16 +45,15 @@ int main(int argc, char *argv[]) {
     createBranch(&topologyDescriptors, branchBalances, procCount);
     closeOtherParentDescriptors(&topologyDescriptors, procCount);
 
-    Message message;
     BranchData mainBranch;
     mainBranch.id = PARENT_ID;
     mainBranch.branchCount = procCount;
     mainBranch.descriptors = &topologyDescriptors;
     mainBranch.logicTime = 0;
 
-    // receive started
-    receiveFromAll(&mainBranch, &message);
-    logReceiveStart(PARENT_ID, message.s_payload, get_physical_time());
+    Message startMessages[procCount];
+    syncReceiveFromAllChild(&mainBranch, startMessages);
+    logReceiveStart(PARENT_ID, get_physical_time());
 
     bank_robbery(&mainBranch, cpCount);
 
@@ -62,7 +62,9 @@ int main(int argc, char *argv[]) {
     send_multicast(&mainBranch, &stopMessage);
 
     // receive done
-    receiveFromAll(&mainBranch, &message);
+    Message receiveMessages[procCount];
+    syncReceiveFromAllChild(&mainBranch, receiveMessages);
+    logReceiveDone(PARENT_ID, get_physical_time());
 
     Message balanceMsg[procCount];
 

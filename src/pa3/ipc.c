@@ -3,9 +3,7 @@
 #include <errno.h>
 
 #include "ipc.h"
-#include "banking.h"
-#include "branch.h"
-
+#include "ipcx.h"
 
 int send(void *self, local_id destination, const Message *message) {
     BranchData *branchData = (BranchData *) self;
@@ -15,8 +13,8 @@ int send(void *self, local_id destination, const Message *message) {
     size_t result = write(branchData->descriptors->descriptors[from][to][WRITE_DESC], message,
                           sizeof(message->s_header) + message->s_header.s_payload_len);
     if (result != -1) {
-        printf("in proc %d success send from %d to %d message type %d\n", branchData->id, from, to,  message->s_header.s_type);
-        fflush(stdout);
+        //printf("in proc %d success send from %d to %d message type %d\n", branchData->id, from, to,  message->s_header.s_type);
+        //fflush(stdout);
         return 0;
     } else {
         printf("fail to send from %d to %d\n", from, to);
@@ -42,23 +40,22 @@ int receive(void *self, local_id sender, Message *message) {
     BranchData *branchData = (BranchData *) self;
     local_id from = sender;
     local_id to = branchData->id;
-   // printf("in proc %d try to receive from %d to %d\n", branchData->id, from, to);
-    fflush(stdout);
+    //printf("in proc %d try to receive from %d to %d\n", branchData->id, from, to);
+    //fflush(stdout);
 
     int header = read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_header, sizeof (message->s_header));
 
     if (header > 0) {
-        int body = read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_payload, message->s_header.s_payload_len);
-        printf("in proc %d success receive %d byte from %d to %d message type %d\n",
-               branchData->id, body, from, to, message->s_header.s_type); // may 0 byte, why?!
-        fflush(stdout);
+        read(branchData->descriptors->descriptors[from][to][READ_DESC], &message->s_payload, message->s_header.s_payload_len);
+        //printf("in proc %d success receive %d byte from %d to %d message type %d\n",
+          //     branchData->id, body, from, to, message->s_header.s_type); // may 0 byte, why?!
+        //fflush(stdout);
         return 0;
     } else {
         if (header == -1 && errno == EAGAIN) {
             //printf("fail to receive from %d to %d, no message found\n", from, to);
         } else {
             printf("fail to receive from %d to %d, error is %d\n", from, to, errno);
-            //sleep(1);
         }
         fflush(stdout);
         return -1;
@@ -73,6 +70,18 @@ int receive_any(void *self, Message *message) {
                 int result = receive(self, i, message);
                 if (result == 0) {
                     return 0;
+                }
+            }
+        }
+    }
+}
+
+void syncReceiveFromAllChild(BranchData *branchData, Message message[]) {
+    for (int i = 1; i < branchData->branchCount; ++i) {
+        if (i != branchData->id) {
+            while (1) {
+                if (receive(branchData, i, &message[i]) == 0) {
+                    break;
                 }
             }
         }

@@ -38,16 +38,3 @@ void buildHistoryMessage(Message *message, BalanceHistory *balanceHistory) {
     message->s_header.s_local_time = get_physical_time();
     memcpy(message->s_payload, balanceHistory, sizeof *balanceHistory);
 }
-
-// "синхронная" функция получения сообщений от всех процессов
-void receiveFromAll(BranchData *branchData, Message *message) {
-    for (int i = 1; i < branchData->branchCount; ++i) {
-        if (i != branchData->id) {
-            while (1) {
-                if (receive(branchData, i, message) == 0) {
-                    break;
-                }
-            }
-        }
-    }
-}
