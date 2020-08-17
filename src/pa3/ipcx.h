@@ -5,8 +5,8 @@
 #include "branch.h"
 
 
-void syncReceiveFromAllChild(BranchData *, Message []);
+void syncReceiveFromAllChild(void *, Message []);
 
-void syncReceive(BranchData *, local_id, Message*);
+void syncReceive(void *, local_id, Message*);
 
 #endif //LAB1_IPCX_H

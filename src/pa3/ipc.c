@@ -76,7 +76,8 @@ int receive_any(void *self, Message *message) {
     }
 }
 
-void syncReceiveFromAllChild(BranchData *branchData, Message message[]) {
+void syncReceiveFromAllChild(void *self, Message message[]) {
+    BranchData *branchData = (BranchData *) self;
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (i != branchData->id) {
             while (1) {
@@ -84,6 +85,14 @@ void syncReceiveFromAllChild(BranchData *branchData, Message message[]) {
                     break;
                 }
             }
+        }
+    }
+}
+
+void syncReceive(void * self, local_id sender, Message *message) {
+    while (1) {
+        if (receive(self, sender, message) == 0) {
+            break;
         }
     }
 }

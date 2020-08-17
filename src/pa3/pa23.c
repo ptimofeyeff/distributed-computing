@@ -19,13 +19,7 @@ void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
 
     send(parent_data, src, &transfer);
     Message ackMessage;
-
-
-    while (1) {
-        if (receive(parent_data, dst, &ackMessage) == 0) {
-            break;
-        }
-    }
+    syncReceive(parent_data, dst, &ackMessage);
 }
 
 int main(int argc, char *argv[]) {
