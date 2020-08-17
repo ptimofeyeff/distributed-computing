@@ -1,31 +1,19 @@
 #ifndef LAB1_BRANCH_H
 #define LAB1_BRANCH_H
 
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <string.h>
-
 #include "ipc.h"
-#include "logs.h"
-#include "history.h"
-
-#define DESC_COUNT 2
-#define READ_DESC 0
-#define WRITE_DESC 1
-#define MAX_PROC 11
+#include "banking.h"
+#include "descriptors.h"
 
 typedef struct {
-    int descriptors[MAX_PROC][MAX_PROC][DESC_COUNT];
-} BranchDescriptors;
-
-typedef struct {
-    BranchDescriptors *descriptors;
+    TopologyDescriptors *descriptors;
     int branchCount;
     local_id id;
     balance_t balance;
+    timestamp_t logicTime;
 } BranchData;
 
-void createBranch(BranchData *, const balance_t[]);
+void createBranch(TopologyDescriptors *, const balance_t[], int);
 
 void run(BranchData *);
 

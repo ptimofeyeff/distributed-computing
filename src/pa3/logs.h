@@ -1,14 +1,12 @@
 #ifndef LAB1_LOGS_H
 #define LAB1_LOGS_H
 
+#include <stdio.h>
 #include "ipc.h"
-#include "common.h"
-#include "pa2345.h"
 #include "banking.h"
-#include "stdio.h"
-#include <unistd.h>
 
 FILE *eventsLogs;
+FILE *pipesLogs;
 
 static const char *const log_open_pipe_descr =
         "pipe descriptor number %d has open for %s from %d to %d\n";

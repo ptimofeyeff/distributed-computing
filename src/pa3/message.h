@@ -1,6 +1,8 @@
 #ifndef LAB1_MESSAGE_H
 #define LAB1_MESSAGE_H
 
+#include "ipc.h"
+#include "banking.h"
 #include "branch.h"
 
 void buildEmptyMessage(Message *, char *, MessageType);

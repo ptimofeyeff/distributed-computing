@@ -1,15 +1,23 @@
-#include "branch.h"
-#include "descriptors.h"
-#include "message.h"
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <string.h>
+#include <unistd.h>
 
-void createBranch(BranchData *branchData, const balance_t balances[]) {
-    for (int i = 1; i < branchData->branchCount; ++i) {
-        branchData->id = i;
-        branchData->balance = balances[i];
-        fflush(stdout);
+#include "branch.h"
+#include "message.h"
+#include "history.h"
+#include "logs.h"
+
+void createBranch(TopologyDescriptors *descriptors, const balance_t balances[], int branchCount) {
+    for (int i = 1; i < branchCount; ++i) {
+        BranchData branchData;
+        branchData.id = i;
+        branchData.balance = balances[i];
+        branchData.descriptors = descriptors;
+        branchData.branchCount = branchCount;
         if (fork() == 0) {
-            closeOtherChildDescriptors(branchData->descriptors, i, branchData->branchCount);
-            run(branchData);
+            closeOtherChildDescriptors(branchData.descriptors, i, branchCount);
+            run(&branchData);
         }
     }
 }

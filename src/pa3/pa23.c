@@ -1,6 +1,14 @@
-#include "pa23.h"
+#include <stdlib.h>
+#include <string.h>
 
-void transfer(void * parent_data, local_id src, local_id dst, balance_t amount) {
+#include "pa23.h"
+#include "common.h"
+#include "logs.h"
+#include "branch.h"
+#include "message.h"
+
+
+void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
     Message transfer;
 
     TransferOrder transferOrder;
@@ -29,46 +37,39 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i <= cpCount; ++i) {
         branchBalances[i] = strtol(argv[i + 2], NULL, 10);
     }
-
-
     int procCount = cpCount + 1;
 
-    BranchDescriptors branchDescriptors;
-    openPipes(&branchDescriptors, procCount);
+    openPipes(&topologyDescriptors, procCount);
 
-    BranchData branchData;
-    branchData.branchCount = procCount;
-    branchData.descriptors = &branchDescriptors;
-
-    createBranch(&branchData, branchBalances);
-    closeOtherParentDescriptors(branchData.descriptors, procCount);
-
-    branchData.id = PARENT_ID;
-    branchData.descriptors = &branchDescriptors; // may redundant line
+    createBranch(&topologyDescriptors, branchBalances, procCount);
+    closeOtherParentDescriptors(&topologyDescriptors, procCount);
 
     Message message;
+    BranchData mainBranch;
+    mainBranch.id = PARENT_ID;
+    mainBranch.branchCount = procCount;
+    mainBranch.descriptors = &topologyDescriptors;
+    mainBranch.logicTime = 0;
 
     // receive started
-    receiveFromAll(&branchData, &message);
+    receiveFromAll(&mainBranch, &message);
     logReceiveStart(PARENT_ID, message.s_payload, get_physical_time());
 
-    bank_robbery(&branchData, cpCount);
+    bank_robbery(&mainBranch, cpCount);
 
     Message stopMessage;
-
     buildStopMessage(&stopMessage);
-
-    send_multicast(&branchData, &stopMessage);
+    send_multicast(&mainBranch, &stopMessage);
 
     // receive done
-    receiveFromAll(&branchData, &message);
+    receiveFromAll(&mainBranch, &message);
 
     Message balanceMsg[procCount];
 
 
     for (int i = 1; i < procCount; ++i) {
         while (1) {
-            if (receive(&branchData, i, &balanceMsg[i]) == 0) {
+            if (receive(&mainBranch, i, &balanceMsg[i]) == 0) {
                 break;
             }
         }
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     print_history(&allHistory);
     waitChild(cpCount);
-    closePipes(&branchDescriptors, procCount, PARENT_ID);
+    closePipes(&topologyDescriptors, procCount, PARENT_ID);
     fclose(pipesLogs);
     return 0;
 }

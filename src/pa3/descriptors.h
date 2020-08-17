@@ -1,19 +1,24 @@
 #ifndef LAB1_DESCRIPTORS_H
 #define LAB1_DESCRIPTORS_H
 
-#include "stdio.h"
-#include "unistd.h"
-#include <fcntl.h>
-#include "branch.h"
+#include "ipc.h"
 
-FILE *pipesLogs;
+#define DESC_COUNT 2
+#define READ_DESC 0
+#define WRITE_DESC 1
+#define MAX_PROC 11
 
-void openPipes(BranchDescriptors *, int);
+typedef struct {
+    int descriptors[MAX_PROC][MAX_PROC][DESC_COUNT];
+} TopologyDescriptors;
 
-void closePipes(BranchDescriptors *, int, local_id);
 
-void closeOtherChildDescriptors(BranchDescriptors *, local_id id, int);
+void openPipes(TopologyDescriptors *, int);
 
-void closeOtherParentDescriptors(BranchDescriptors *, int);
+void closePipes(TopologyDescriptors *, int, local_id);
+
+void closeOtherChildDescriptors(TopologyDescriptors *, local_id id, int);
+
+void closeOtherParentDescriptors(TopologyDescriptors *, int);
 
 #endif //LAB1_DESCRIPTORS_H
