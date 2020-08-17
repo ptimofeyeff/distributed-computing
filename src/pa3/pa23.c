@@ -61,27 +61,18 @@ int main(int argc, char *argv[]) {
     buildStopMessage(&stopMessage);
     send_multicast(&mainBranch, &stopMessage);
 
-    // receive done
     Message receiveMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, receiveMessages);
     logReceiveDone(PARENT_ID, get_physical_time());
 
-    Message balanceMsg[procCount];
-
-
-    for (int i = 1; i < procCount; ++i) {
-        while (1) {
-            if (receive(&mainBranch, i, &balanceMsg[i]) == 0) {
-                break;
-            }
-        }
-    }
+    Message balanceMessages[procCount];
+    syncReceiveFromAllChild(&mainBranch, balanceMessages);
 
     AllHistory allHistory;
     allHistory.s_history_len = cpCount;
     for (int i = 0; i < cpCount; ++i) {
         BalanceHistory balanceHistory;
-        memcpy(&balanceHistory, &balanceMsg[i + 1].s_payload, sizeof(BalanceHistory));
+        memcpy(&balanceHistory, &balanceMessages[i + 1].s_payload, sizeof(BalanceHistory));
         allHistory.s_history[i] = balanceHistory;
     }
 
