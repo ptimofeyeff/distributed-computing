@@ -5,7 +5,9 @@
 #include "banking.h"
 #include "branch.h"
 
-void buildEmptyMessage(Message *, char *, MessageType);
+void buildStartMessage(Message *message, local_id id, balance_t balance);
+
+void buildDoneMessage(Message *message, local_id id, balance_t balance);
 
 void buildTransferMessage(Message *, TransferOrder *);
 

@@ -25,7 +25,6 @@ void createBranch(TopologyDescriptors *descriptors, const balance_t balances[], 
 
 
 void run(BranchData *branchData) {
-    char payload[MAX_PAYLOAD_LEN];
     int isWork = 1;
     timestamp_t lastCommitTime = 0;
 
@@ -38,7 +37,7 @@ void run(BranchData *branchData) {
 
     Message startMessage;
     logStarted(branchData->id, get_physical_time(), branchData->balance);
-    buildEmptyMessage(&startMessage, payload, STARTED);
+    buildStartMessage(&startMessage, branchData->id, branchData->balance);
     send_multicast(branchData, &startMessage);
 
     Message startMessages[branchData->branchCount];
@@ -85,7 +84,7 @@ void run(BranchData *branchData) {
     }
 
     Message doneMessage;
-    buildEmptyMessage(&doneMessage, payload, DONE);
+    buildDoneMessage(&doneMessage, branchData->id, branchData->balance);
     logDone(branchData->id, get_physical_time(), branchData->balance);
     send_multicast(branchData, &doneMessage);
 
