@@ -5,8 +5,6 @@
 #include "banking.h"
 #include "descriptors.h"
 
-timestamp_t logicTime;
-
 typedef struct {
     TopologyDescriptors *descriptors;
     int branchCount;

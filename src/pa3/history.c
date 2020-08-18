@@ -3,7 +3,7 @@
 void buildBalanceState(BalanceState *balanceState, balance_t balance) {
     balanceState->s_balance = balance;
     balanceState->s_balance_pending_in = 0;
-    balanceState->s_time = get_physical_time();
+    balanceState->s_time = get_lamport_time();
 }
 
 
