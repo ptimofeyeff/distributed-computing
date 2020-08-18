@@ -36,18 +36,21 @@ void run(BranchData *branchData) {
     balanceHistory.s_history[0] = startBalance;
 
     Message startMessage;
-    logStarted(branchData->id, get_physical_time(), branchData->balance);
+    //logicTime++;
+    logStarted(branchData->id, branchData->balance);
     buildStartMessage(&startMessage, branchData->id, branchData->balance);
     send_multicast(branchData, &startMessage);
 
     Message startMessages[branchData->branchCount];
     syncReceiveFromAllChild(branchData, startMessages);
-    logReceiveStart(branchData->id, get_physical_time());
+    //logicTime++;
+    logReceiveStart(branchData->id);
 
 
     while (isWork) {
         Message workMessage;
         receive_any(branchData, &workMessage);
+        //logicTime++;
 
         if (workMessage.s_header.s_type == TRANSFER) {
             TransferOrder transferOrder;
@@ -58,7 +61,7 @@ void run(BranchData *branchData) {
                 buildBalanceState(&balanceState, branchData->balance);
                 commitBalanceState(&balanceState, &balanceHistory, lastCommitTime, balanceState.s_time);
                 lastCommitTime = balanceState.s_time;
-                logTransferOut(get_physical_time(), branchData->id, transferOrder.s_amount, transferOrder.s_dst);
+                logTransferOut(branchData->id, transferOrder.s_amount, transferOrder.s_dst);
                 send(branchData, transferOrder.s_dst, &workMessage);
             } else {
                 branchData->balance += transferOrder.s_amount;
@@ -66,15 +69,15 @@ void run(BranchData *branchData) {
                 buildBalanceState(&balanceState, branchData->balance);
                 commitBalanceState(&balanceState, &balanceHistory, lastCommitTime, balanceState.s_time);
                 lastCommitTime = balanceState.s_time;
-                logTransferIn(get_physical_time(), transferOrder.s_src, transferOrder.s_amount, branchData->id);
-
+                logicTime++;
+                logTransferIn(transferOrder.s_src, transferOrder.s_amount, branchData->id);
                 Message ackMessage;
                 buildAckMessage(&ackMessage);
                 send(branchData, PARENT_ID, &ackMessage);
             }
         } else if (workMessage.s_header.s_type == STOP) {
             isWork = 0;
-            balanceHistory.s_history_len = get_physical_time() + 1;
+            balanceHistory.s_history_len = get_lamport_time() + 1;
             if (balanceHistory.s_history_len > (lastCommitTime + 1)) {
                 BalanceState  finalState;
                 buildBalanceState(&finalState, branchData->balance);
@@ -84,15 +87,18 @@ void run(BranchData *branchData) {
     }
 
     Message doneMessage;
+    //logicTime++;
     buildDoneMessage(&doneMessage, branchData->id, branchData->balance);
-    logDone(branchData->id, get_physical_time(), branchData->balance);
+    logDone(branchData->id, branchData->balance);
     send_multicast(branchData, &doneMessage);
 
     Message doneMessages[branchData->branchCount];
     syncReceiveFromAllChild(branchData, doneMessages);
-    logReceiveDone(branchData->id, get_physical_time());
+    //logicTime++;
+    logReceiveDone(branchData->id);
 
     Message historyMessage;
+    //logicTime++;
     buildHistoryMessage(&historyMessage, &balanceHistory);
     send(branchData, PARENT_ID, &historyMessage);
 
@@ -107,5 +113,5 @@ void waitChild(int cpCount) {
 }
 
 timestamp_t get_lamport_time() {
-    return logicTime;
+    return get_physical_time();
 }

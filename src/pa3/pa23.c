@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     Message startMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, startMessages);
-    logReceiveStart(PARENT_ID, get_physical_time());
+    logReceiveStart(PARENT_ID);
 
     bank_robbery(&mainBranch, cpCount);
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     Message receiveMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, receiveMessages);
-    logReceiveDone(PARENT_ID, get_physical_time());
+    logReceiveDone(PARENT_ID);
 
     Message balanceMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, balanceMessages);

@@ -2,31 +2,31 @@
 #include "logs.h"
 #include "pa2345.h"
 
-void logStarted(local_id id, timestamp_t timestamp, balance_t balance ) {
-    fprintf(eventsLogs, log_started_fmt, timestamp, id, getpid(), getppid(), balance);
+void logStarted(local_id id, balance_t balance ) {
+    fprintf(eventsLogs, log_started_fmt, get_lamport_time(), id, getpid(), getppid(), balance);
     fflush(eventsLogs);
-    printf(log_started_fmt, timestamp, id, getpid(), getppid(), balance);
+    printf(log_started_fmt, get_lamport_time(), id, getpid(), getppid(), balance);
     fflush(stdout);
 }
 
-void logDone(local_id id, timestamp_t timestamp, balance_t balance) {
-    fprintf(eventsLogs, log_done_fmt, timestamp, id, balance);
+void logDone(local_id id, balance_t balance) {
+    fprintf(eventsLogs, log_done_fmt, get_lamport_time(), id, balance);
     fflush(eventsLogs);
-    printf(log_done_fmt, timestamp, id, balance);
+    printf(log_done_fmt, get_lamport_time(), id, balance);
     fflush(stdout);
 }
 
-void logReceiveStart(local_id id, timestamp_t timestamp) {
-    fprintf(eventsLogs, log_received_all_started_fmt, timestamp, id);
+void logReceiveStart(local_id id) {
+    fprintf(eventsLogs, log_received_all_started_fmt, get_lamport_time(), id);
     fflush(eventsLogs);
-    printf(log_received_all_started_fmt, timestamp, id);
+    printf(log_received_all_started_fmt, get_lamport_time(), id);
     fflush(stdout);
 }
 
-void logReceiveDone(local_id id, timestamp_t timestamp) {
-    fprintf(eventsLogs, log_received_all_done_fmt, timestamp, id);
+void logReceiveDone(local_id id) {
+    fprintf(eventsLogs, log_received_all_done_fmt, get_lamport_time(), id);
     fflush(eventsLogs);
-    printf(log_received_all_done_fmt, timestamp, id);
+    printf(log_received_all_done_fmt, get_lamport_time(), id);
     fflush(stdout);
 }
 
@@ -44,17 +44,17 @@ void logCloseDescriptor(int fd, local_id id) {
     //fflush(stdout);
 }
 
-void logTransferIn(timestamp_t timestamp, local_id src, balance_t amount, local_id dst) {
-    fprintf(eventsLogs, log_transfer_in_fmt, timestamp, dst, amount, src);
+void logTransferIn(local_id src, balance_t amount, local_id dst) {
+    fprintf(eventsLogs, log_transfer_in_fmt, get_lamport_time(), dst, amount, src);
     fflush(eventsLogs);
-    printf(log_transfer_in_fmt, timestamp, src, amount, dst);
+    printf(log_transfer_in_fmt, get_lamport_time(), src, amount, dst);
     fflush(stdout);
 }
 
-void logTransferOut(timestamp_t timestamp, local_id src, balance_t amount, local_id dst) {
-    fprintf(eventsLogs, log_transfer_out_fmt, timestamp, src, amount, dst);
+void logTransferOut(local_id src, balance_t amount, local_id dst) {
+    fprintf(eventsLogs, log_transfer_out_fmt, get_lamport_time(), src, amount, dst);
     fflush(eventsLogs);
-    printf(log_transfer_out_fmt, timestamp, src, amount, dst);
+    printf(log_transfer_out_fmt, get_lamport_time(), src, amount, dst);
     fflush(stdout);
 }
 

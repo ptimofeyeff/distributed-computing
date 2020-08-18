@@ -13,21 +13,21 @@ static const char *const log_open_pipe_descr =
 static const char *const log_close_pipe_descr =
         "pipe descriptor number %d has close in process %d\n";
 
-void logStarted(local_id, timestamp_t, balance_t);
+void logStarted(local_id, balance_t);
 
-void logDone(local_id, timestamp_t, balance_t);
+void logDone(local_id, balance_t);
 
-void logReceiveStart(local_id, timestamp_t);
+void logReceiveStart(local_id);
 
-void logReceiveDone(local_id, timestamp_t);
+void logReceiveDone(local_id);
 
 void logOpenDescriptor(int, char *, int, int);
 
 void logCloseDescriptor(int, local_id);
 
-void logTransferIn(timestamp_t, local_id src, balance_t, local_id dst);
+void logTransferIn(local_id src, balance_t, local_id dst);
 
-void logTransferOut(timestamp_t, local_id src, balance_t, local_id dst);
+void logTransferOut(local_id src, balance_t, local_id dst);
 
 void printMessage(Message *message, local_id id);
 
