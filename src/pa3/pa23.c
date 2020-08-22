@@ -49,18 +49,18 @@ int main(int argc, char *argv[]) {
 
     Message startMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, startMessages);
-    //logReceiveStart(PARENT_ID);
+    logReceiveStart(PARENT_ID);
 
     bank_robbery(&mainBranch, cpCount);
 
+    incrementLamportTime();
     Message stopMessage;
     buildStopMessage(&stopMessage);
-    incrementLamportTime();
     send_multicast(&mainBranch, &stopMessage);
 
     Message receiveMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, receiveMessages);
-    //logReceiveDone(PARENT_ID);
+    logReceiveDone(PARENT_ID);
 
     Message balanceMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, balanceMessages);

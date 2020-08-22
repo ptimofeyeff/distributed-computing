@@ -60,14 +60,13 @@ void init() {
 void start() {
     Message startMessage;
     incrementLamportTime();
-    //logStarted(branchData.id, branchData.balance);
+    logStarted(branchData.id, branchData.balance);
     buildStartMessage(&startMessage, branchData.id, branchData.balance);
     send_multicast(&branchData, &startMessage);
 
     Message startMessages[branchData.branchCount];
-    incrementLamportTime();
     syncReceiveFromAllChild(&branchData, startMessages);
-    //logReceiveStart(branchData.id);
+    logReceiveStart(branchData.id);
 }
 
 void work() {
@@ -115,20 +114,20 @@ void work() {
 }
 
 void done() {
-    Message doneMessage;
     incrementLamportTime();
+    Message doneMessage;
     buildDoneMessage(&doneMessage, branchData.id, branchData.balance);
-    //logDone(branchData.id, branchData.balance);
+    logDone(branchData.id, branchData.balance);
     send_multicast(&branchData, &doneMessage);
 
     Message doneMessages[branchData.branchCount];
     syncReceiveFromAllChild(&branchData, doneMessages);
-    //logReceiveDone(branchData.id);
+    logReceiveDone(branchData.id);
 }
 
 void finalize() {
-    Message historyMessage;
     incrementLamportTime();
+    Message historyMessage;
     buildHistoryMessage(&historyMessage, &balanceHistory);
     send(&branchData, PARENT_ID, &historyMessage);
     closePipes(branchData.descriptors, branchData.branchCount, branchData.id);

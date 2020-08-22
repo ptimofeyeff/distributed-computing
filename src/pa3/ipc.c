@@ -81,13 +81,16 @@ int receive_any(void *self, Message *message) {
     }
 }
 
-// not implemented lamport increase
 void syncReceiveFromAllChild(void *self, Message message[]) {
     BranchData *branchData = (BranchData *) self;
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (i != branchData->id) {
             while (1) {
                 if (receive(branchData, i, &message[i]) == 0) {
+                    if (branchData->logicTime < message->s_header.s_local_time) {
+                        setLamportTime(message->s_header.s_local_time);
+                    }
+                    incrementLamportTime();
                     break;
                 }
             }
