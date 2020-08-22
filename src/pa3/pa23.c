@@ -7,17 +7,19 @@
 #include "branch.h"
 #include "message.h"
 #include "ipcx.h"
+#include "lamport.h"
 
 void transfer(void *parent_data, local_id src, local_id dst, balance_t amount) {
-    Message transfer;
-
     TransferOrder transferOrder;
     transferOrder.s_src = src;
     transferOrder.s_dst = dst;
     transferOrder.s_amount = amount;
-    buildTransferMessage(&transfer, &transferOrder);
 
+    incrementLamportTime();
+    Message transfer;
+    buildTransferMessage(&transfer, &transferOrder);
     send(parent_data, src, &transfer);
+
     Message ackMessage;
     syncReceive(parent_data, dst, &ackMessage);
 }
@@ -43,21 +45,22 @@ int main(int argc, char *argv[]) {
     mainBranch.id = PARENT_ID;
     mainBranch.branchCount = procCount;
     mainBranch.descriptors = &topologyDescriptors;
-    mainBranch.logicTime = 0;
+    mainBranch.logicTime = get_lamport_time();
 
     Message startMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, startMessages);
-    logReceiveStart(PARENT_ID);
+    //logReceiveStart(PARENT_ID);
 
     bank_robbery(&mainBranch, cpCount);
 
     Message stopMessage;
     buildStopMessage(&stopMessage);
+    incrementLamportTime();
     send_multicast(&mainBranch, &stopMessage);
 
     Message receiveMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, receiveMessages);
-    logReceiveDone(PARENT_ID);
+    //logReceiveDone(PARENT_ID);
 
     Message balanceMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, balanceMessages);

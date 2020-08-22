@@ -4,6 +4,7 @@
 
 #include "ipc.h"
 #include "ipcx.h"
+#include "lamport.h"
 
 int send(void *self, local_id destination, const Message *message) {
     BranchData *branchData = (BranchData *) self;
@@ -69,6 +70,10 @@ int receive_any(void *self, Message *message) {
             if (i != branchData->id) {
                 int result = receive(self, i, message);
                 if (result == 0) {
+                    if (branchData->logicTime < message->s_header.s_local_time) {
+                        setLamportTime(message->s_header.s_local_time);
+                    }
+                    incrementLamportTime();
                     return 0;
                 }
             }
@@ -76,6 +81,7 @@ int receive_any(void *self, Message *message) {
     }
 }
 
+// not implemented lamport increase
 void syncReceiveFromAllChild(void *self, Message message[]) {
     BranchData *branchData = (BranchData *) self;
     for (int i = 1; i < branchData->branchCount; ++i) {
@@ -90,8 +96,13 @@ void syncReceiveFromAllChild(void *self, Message message[]) {
 }
 
 void syncReceive(void * self, local_id sender, Message *message) {
+    BranchData *branchData = (BranchData *) self;
     while (1) {
         if (receive(self, sender, message) == 0) {
+            if (branchData->logicTime < message->s_header.s_local_time) {
+                setLamportTime(message->s_header.s_local_time);
+            }
+            incrementLamportTime();
             break;
         }
     }

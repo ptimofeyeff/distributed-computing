@@ -1,16 +1,21 @@
 #include "history.h"
 
-void buildBalanceState(BalanceState *balanceState, balance_t balance) {
+void buildBalanceState(BalanceState *balanceState, balance_t balance, balance_t pending) {
     balanceState->s_balance = balance;
-    balanceState->s_balance_pending_in = 0;
+    balanceState->s_balance_pending_in = pending;
     balanceState->s_time = get_lamport_time();
 }
 
 
-void commitBalanceState(BalanceState *balanceState, BalanceHistory *balanceHistory, timestamp_t lastCommitTime, timestamp_t currentTimeStamp) {
-    for (int i = lastCommitTime + 1; i <= currentTimeStamp; ++i) {
+void commitBalanceState(BalanceState *balanceState, BalanceHistory *balanceHistory, timestamp_t lastCommitTime) {
+    // write history
+    for (int i = lastCommitTime; i < get_lamport_time(); ++i) {
         balanceHistory->s_history[i].s_time = i;
-        balanceHistory->s_history[i].s_balance =
-                ( i!= currentTimeStamp) ? balanceHistory->s_history[lastCommitTime].s_balance :  balanceState->s_balance;
+        balanceHistory->s_history[i].s_balance = balanceHistory->s_history[lastCommitTime].s_balance;
+        balanceHistory->s_history[i].s_balance_pending_in = balanceHistory->s_history[lastCommitTime].s_balance_pending_in;
     }
+    // write now
+    balanceHistory->s_history[get_lamport_time()].s_time = get_lamport_time();
+    balanceHistory->s_history[get_lamport_time()].s_balance = balanceState->s_balance;
+    balanceHistory->s_history[get_lamport_time()].s_balance_pending_in = balanceState->s_balance_pending_in;
 }
