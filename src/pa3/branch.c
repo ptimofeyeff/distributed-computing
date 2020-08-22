@@ -81,7 +81,7 @@ void work() {
                 branchData.balance -= transferOrder.s_amount;
                 BalanceState balanceState;
                 buildBalanceState(&balanceState, branchData.balance, transferOrder.s_amount);
-                commitBalanceState(&balanceState, &balanceHistory, lastCommitTime);
+                commitBalanceState(&balanceState, &balanceHistory, lastCommitTime, 1);
                 lastCommitTime = get_lamport_time();
                 logTransferOut(branchData.id, transferOrder.s_amount, transferOrder.s_dst);
 
@@ -92,7 +92,7 @@ void work() {
                 branchData.balance += transferOrder.s_amount;
                 BalanceState balanceState;
                 buildBalanceState(&balanceState, branchData.balance, 0);
-                commitBalanceState(&balanceState, &balanceHistory, lastCommitTime);
+                commitBalanceState(&balanceState, &balanceHistory, lastCommitTime, 0);
                 lastCommitTime = get_lamport_time();
                 logTransferIn(transferOrder.s_src, transferOrder.s_amount, branchData.id);
 
@@ -107,7 +107,7 @@ void work() {
             if (balanceHistory.s_history_len > (lastCommitTime + 1)) {
                 BalanceState  finalState;
                 buildBalanceState(&finalState, branchData.balance, 0);
-                commitBalanceState(&finalState, &balanceHistory, lastCommitTime);
+                commitBalanceState(&finalState, &balanceHistory, lastCommitTime, 0);
             }
         }
     }
