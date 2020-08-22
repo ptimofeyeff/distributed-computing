@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "pa23.h"
 #include "common.h"
@@ -68,6 +67,8 @@ int main(int argc, char *argv[]) {
     mainBranch.descriptors = &topologyDescriptors;
     mainBranch.logicTime = get_lamport_time();
 
+    incrementLamportTime(); // starting emulation?
+
     Message startMessages[procCount];
     syncReceiveFromAllChild(&mainBranch, startMessages);
     logReceiveStart(PARENT_ID);
@@ -105,7 +106,6 @@ int main(int argc, char *argv[]) {
             allHistory.s_history[proc - 1].s_history[j].s_balance_pending_in -= amount;
         }
     }
-
 
     print_history(&allHistory);
     waitChild(cpCount);

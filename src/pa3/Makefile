@@ -1,7 +1,7 @@
 make: clean
 	clang -o pa3 -std=c99 -Wall -pedantic *.c -L. -lruntime
 run: make
-	./pa3 -p 2 10 20
+	./pa3 -p 5 10 10 20 20 30
 clean:
 	-rm *.log pa3 *.gz
 tar: clean
