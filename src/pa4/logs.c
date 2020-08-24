@@ -44,21 +44,6 @@ void logCloseDescriptor(int fd, local_id id) {
     //fflush(stdout);
 }
 
-void logTransferIn(local_id src, balance_t amount, local_id dst) {
-    fprintf(eventsLogs, log_transfer_in_fmt, get_lamport_time(), dst, amount, src);
-    fflush(eventsLogs);
-    printf(log_transfer_in_fmt, get_lamport_time(), src, amount, dst);
-    fflush(stdout);
-}
-
-void logTransferOut(local_id src, balance_t amount, local_id dst) {
-    fprintf(eventsLogs, log_transfer_out_fmt, get_lamport_time(), src, amount, dst);
-    fflush(eventsLogs);
-    printf(log_transfer_out_fmt, get_lamport_time(), src, amount, dst);
-    fflush(stdout);
-}
-
-
 void printMessage(Message *message, local_id id) {
     printf("\n\nprocess with id %d receive:\n"
            "message magic = %d\n"

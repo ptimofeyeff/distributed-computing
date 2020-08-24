@@ -9,12 +9,4 @@ void buildStartMessage(Message *message, local_id id, balance_t balance);
 
 void buildDoneMessage(Message *message, local_id id, balance_t balance);
 
-void buildTransferMessage(Message *, TransferOrder *);
-
-void buildAckMessage(Message *);
-
-void buildStopMessage(Message *);
-
-void buildHistoryMessage(Message *, BalanceHistory *);
-
 #endif //LAB1_MESSAGE_H

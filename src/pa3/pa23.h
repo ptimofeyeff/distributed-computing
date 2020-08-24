@@ -1,4 +1,4 @@
-#ifndef LAB1_PA23_H
+#ifndef LAB1_MAIN_H
 #define LAB1_PA23_H
 
 #include "descriptors.h"
@@ -7,4 +7,4 @@
 
 TopologyDescriptors topologyDescriptors;
 
-#endif //LAB1_PA23_H
+#endif //LAB1_MAIN_H
