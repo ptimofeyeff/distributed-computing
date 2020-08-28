@@ -69,10 +69,6 @@ void syncReceiveCsReplies(BranchData *branchData, Request currentRequest) {
                 if (receive(branchData, i, &csReplies[i]) == 0) { // голый ресив не увеличивает отметку времени при приеме
                     printf("proc %d receive message from proc %d with type %d\n",
                            branchData->id, branchData->senderId, csReplies[i].s_header.s_type);
-                    if (branchData->logicTime < csReplies[i].s_header.s_local_time) {
-                        setLamportTime(csReplies[i].s_header.s_local_time);
-                    }
-                    incrementLamportTime();
 
                     if (csReplies[i].s_header.s_type == CS_REPLY) {
                         if (csReplies[i].s_header.s_local_time > currentRequest.time) {

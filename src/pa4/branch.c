@@ -63,7 +63,13 @@ void start() {
 }
 
 void work() {
-    int loopCount = 5;//branchData.id * 5;
+    int loopCount = 2;
+    /*if (branchData.id == 1) {
+        loopCount = 1;
+    } else {
+        loopCount = 2;
+    }*/
+
     for (int i = 1; i <= loopCount; ++i) {
         char message[256];
         sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
