@@ -21,7 +21,7 @@ int request_cs(const void * self) {
 int release_cs(const void * self) {
     BranchData *branchData = (BranchData *) self;
     Request request = dequeue();
-    printf("in proc %d request with timestamp %d and id %d was deleted\n", branchData->id, request.time, request.procId);
+    printf("in proc %d request (%d, %d) was deleted\n", branchData->id, request.time, request.procId);
 
     incrementLamportTime();
     Message releaseMsg;
@@ -66,17 +66,26 @@ void syncReceiveCsReplies(BranchData *branchData, Request currentRequest) {
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (branchData->id != i) {
             while (true) {
-                if (receive(branchData, i, &csReplies[i]) == 0) {
+                if (receive(branchData, i, &csReplies[i]) == 0) { // голый ресив не увеличивает отметку времени при приеме
                     printf("proc %d receive message from proc %d with type %d\n",
                            branchData->id, branchData->senderId, csReplies[i].s_header.s_type);
-                    if (csReplies[i].s_header.s_local_time > currentRequest.time) {
-                        break;
+                    if (branchData->logicTime < csReplies[i].s_header.s_local_time) {
+                        setLamportTime(csReplies[i].s_header.s_local_time);
+                    }
+                    incrementLamportTime();
+
+                    if (csReplies[i].s_header.s_type == CS_REPLY) {
+                        if (csReplies[i].s_header.s_local_time > currentRequest.time) {
+                            break;
+                        } else {
+                            continue;
+                        }
                     } else {
                         if (csReplies[i].s_header.s_type == CS_REQUEST) {
                             receiveCsRequestAndSendReply(branchData, csReplies[i]);
                             continue;
                         }
-                        if (csReplies->s_header.s_type == CS_RELEASE) {
+                        if (csReplies[i].s_header.s_type == CS_RELEASE) {
                             receiveCsRelease(branchData, csReplies[i]);
                             continue;
                         }
@@ -113,10 +122,10 @@ void receiveCsRequestAndSendReply(BranchData *branchData, Message requestFromOth
 }
 
 void receiveCsRelease(BranchData *branchData, Message release) {
-    Request request = {release.s_header.s_local_time, branchData->senderId};
+    //Request request = {release.s_header.s_local_time, branchData->senderId};
 
-    dequeue(); // тут нужно удалить именно тот, который пришел, а не первый
-    printf("proc %d delete request from it's queue\n", branchData->id);
+    Request request = dequeue(); // тут нужно удалить именно тот, который пришел, а не первый
+    printf("proc %d delete request (%d, %d)\n", branchData->id, request.time, request.procId);
 }
 
 
