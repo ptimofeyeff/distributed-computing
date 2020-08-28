@@ -63,20 +63,31 @@ void start() {
 }
 
 void work() {
-    int loopCount = branchData.id * 5;
+    /*int loopCount = branchData.id * 5;
 
     for (int i = 1; i <= loopCount; ++i) {
         char message[256];
         sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
 
-        //request_cs(); with flag --mutexl only
+        request_cs(&branchData);
 
-        //print(message);
-        printf("%s", message);
+        printf("proc %d enter to cs\n", branchData.id);
+        print(message);
+        //printf("%s", message);
+        printf("proc %d out from cs\n", branchData.id);
+        release_cs(&branchData);
+    }*/
 
-        //release_cs(); with flag --mutex only
-    }
+    char message[256];
+    sprintf(message, log_loop_operation_fmt, branchData.id, 1, 1);
 
+    request_cs(&branchData);
+
+    printf("proc %d enter to cs\n", branchData.id);
+    print(message);
+    //printf("%s", message);
+    printf("proc %d out from cs\n", branchData.id);
+    release_cs(&branchData);
 }
 
 void done() {

@@ -9,4 +9,6 @@ void syncReceiveFromAllChild(void *, Message []);
 
 void syncReceive(void *, local_id, Message*);
 
+int sendToAllChild(void *, const Message *);
+
 #endif //LAB1_IPCX_H

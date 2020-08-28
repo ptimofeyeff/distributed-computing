@@ -9,4 +9,6 @@ void buildStartMessage(Message *message, local_id id, balance_t balance);
 
 void buildDoneMessage(Message *message, local_id id, balance_t balance);
 
+void buildCsMessage(Message *, MessageType);
+
 #endif //LAB1_MESSAGE_H

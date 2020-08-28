@@ -37,6 +37,20 @@ int send_multicast(void *self, const Message *message) {
     return 0;
 }
 
+int sendToAllChild(void *self, const Message *message) {
+    BranchData *branchData = (BranchData *) self;
+    for (int i = 1; i < branchData->branchCount; ++i) {
+        if (i != branchData->id) {
+            int result = send(self, i, message);
+            if (result == -1) {
+                printf("fail to send_multicast child\n");
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
 int receive(void *self, local_id sender, Message *message) {
     BranchData *branchData = (BranchData *) self;
     local_id from = sender;
@@ -51,6 +65,7 @@ int receive(void *self, local_id sender, Message *message) {
         //printf("in proc %d success receive %d byte from %d to %d message type %d\n",
           //     branchData->id, body, from, to, message->s_header.s_type); // may 0 byte, why?!
         //fflush(stdout);
+        branchData->senderId = sender;
         return 0;
     } else {
         if (header == -1 && errno == EAGAIN) {
@@ -65,20 +80,19 @@ int receive(void *self, local_id sender, Message *message) {
 
 int receive_any(void *self, Message *message) {
     BranchData *branchData = (BranchData *) self;
-    while (1) {
-        for (int i = 0; i < branchData->branchCount; ++i) {
-            if (i != branchData->id) {
-                int result = receive(self, i, message);
-                if (result == 0) {
-                    if (branchData->logicTime < message->s_header.s_local_time) {
-                        setLamportTime(message->s_header.s_local_time);
-                    }
-                    incrementLamportTime();
-                    return 0;
+    for (int i = 0; i < branchData->branchCount; ++i) {
+        if (i != branchData->id) {
+            int result = receive(self, i, message);
+            if (result == 0) {
+                if (branchData->logicTime < message->s_header.s_local_time) {
+                    setLamportTime(message->s_header.s_local_time);
                 }
+                incrementLamportTime();
+                return 0;
             }
         }
     }
+    return -1;
 }
 
 void syncReceiveFromAllChild(void *self, Message message[]) {

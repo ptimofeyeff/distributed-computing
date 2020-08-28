@@ -3,6 +3,7 @@ src/client-server
 src/cp
 src/learnC
 src/morinaLab
+src/gleb
 .idea
 *.log
 *.out

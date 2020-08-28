@@ -21,3 +21,10 @@ void buildDoneMessage(Message *message, local_id id, balance_t balance) {
     sprintf(message->s_payload, log_done_fmt, message->s_header.s_local_time, id, balance);
     message->s_header.s_payload_len = strlen(message->s_payload);
 }
+
+void buildCsMessage(Message *message, MessageType type) {
+    message->s_header.s_magic = MESSAGE_MAGIC;
+    message->s_header.s_type = type;
+    message->s_header.s_local_time = get_lamport_time();
+    message->s_header.s_payload_len = 0;
+}

@@ -9,6 +9,7 @@ typedef struct {
     int branchCount;
     local_id id;
     timestamp_t logicTime;
+    local_id senderId;
 } BranchData;
 
 void createBranch(TopologyDescriptors *, int);

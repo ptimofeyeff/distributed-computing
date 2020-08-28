@@ -21,8 +21,6 @@ add_executable(unnamedPipe src/client-server/Part_3/unnamed_pipe.c)
 
 add_executable(loba src/pa1/main.c src/pa1/logs.c src/pa1/pipes.c src/pa1/ipc.c)
 
-add_executable(test src/learnC/testProg.c)
+add_executable(test src/learnC/testProg.c src/pa4)
 
 add_executable(twoPipes src/learnC/twoPipes.c)
-
-add_executable(morina src/morinaLab/ipc.c src/morinaLab/main.c src/morinaLab/process.c src/morinaLab/utils.c)
