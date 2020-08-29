@@ -13,12 +13,21 @@ int main(int argc, char *argv[]) {
     eventsLogs = fopen(events_log, "w");
     pipesLogs = fopen(pipes_log, "w");
 
-    int cpCount = (int) strtol(argv[2], NULL, 10);
-    int procCount = cpCount + 1;
+    int cpCount;
+    int procCount;
 
-    openPipes(&topologyDescriptors, procCount);
+    if (argc == 3) {
+        cpCount = (int) strtol(argv[2], NULL, 10);
+        procCount = cpCount + 1;
+        openPipes(&topologyDescriptors, procCount);
+        createBranch(&topologyDescriptors, procCount, false);
+    } else {
+        cpCount = (int) strtol(argv[3], NULL, 10);
+        procCount = cpCount + 1;
+        openPipes(&topologyDescriptors, procCount);
+        createBranch(&topologyDescriptors, procCount, true);
+    }
 
-    createBranch(&topologyDescriptors, procCount);
     closeOtherParentDescriptors(&topologyDescriptors, procCount);
 
     BranchData mainBranch;

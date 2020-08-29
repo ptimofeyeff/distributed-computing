@@ -3,6 +3,7 @@
 
 #include "ipc.h"
 #include "descriptors.h"
+#include "stdbool.h"
 
 typedef struct {
     TopologyDescriptors *descriptors;
@@ -10,9 +11,10 @@ typedef struct {
     local_id id;
     timestamp_t logicTime;
     local_id senderId;
+    bool mutex;
 } BranchData;
 
-void createBranch(TopologyDescriptors *, int);
+void createBranch(TopologyDescriptors *, int, bool);
 
 void run(BranchData *);
 

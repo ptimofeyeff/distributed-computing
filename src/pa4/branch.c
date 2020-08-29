@@ -9,6 +9,7 @@
 #include "ipcx.h"
 #include "lamport.h"
 #include "pa2345.h"
+#include "stdbool.h"
 
 BranchData branchData;
 int isWork = 1;
@@ -20,12 +21,13 @@ void done();
 void finalize();
 
 
-void createBranch(TopologyDescriptors *descriptors, int branchCount) {
+void createBranch(TopologyDescriptors *descriptors, int branchCount, bool mutex) {
     for (int i = 1; i < branchCount; ++i) {
         branchData.id = i;
         branchData.descriptors = descriptors;
         branchData.branchCount = branchCount;
         branchData.logicTime = get_lamport_time();
+        branchData.mutex = mutex;
         if (fork() == 0) {
             closeOtherChildDescriptors(branchData.descriptors, i, branchCount);
             run(&branchData);
@@ -67,17 +69,22 @@ void work() {
 
     int loopCount = branchData.id * 5;
 
-    for (int i = 1; i <= loopCount; ++i) {
-        char message[256];
-        sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
-        request_cs(&branchData);
-
-        printf("%s", message);
-        print(message);
-        fflush(stdout);
-
-        release_cs(&branchData);
+    if (branchData.mutex) {
+        for (int i = 1; i <= loopCount; ++i) {
+            char message[256];
+            sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
+            request_cs(&branchData);
+            print(message);
+            release_cs(&branchData);
+        }
+    } else {
+        for (int i = 1; i <= loopCount; ++i) {
+            char message[256];
+            sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
+            print(message);
+        }
     }
+
 }
 
 void done() {
