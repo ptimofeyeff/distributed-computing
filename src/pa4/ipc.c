@@ -131,6 +131,19 @@ void syncReceiveDoneFromAllWorkers(void *self, Message message[], Workers *worke
     }
 }
 
+int receiveFromAnyWorkers(void *self, Message *message) {
+    BranchData *branchData = (BranchData *) self;
+    for (int i = 0; i < getWorkers().length; ++i) {
+        if (getWorkers().procId[i] != branchData->id) {
+            int result = receive(self, getWorkers().procId[i], message);
+            if (result == 0) {
+                return 0;
+            }
+        }
+    }
+    return -1;
+}
+
 void syncReceive(void * self, local_id sender, Message *message) {
     while (1) {
         if (receive(self, sender, message) == 0) {

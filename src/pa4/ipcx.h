@@ -16,4 +16,6 @@ int sendToAllWorkers(BranchData *branchData, Message *message, Workers *workers)
 
 void syncReceiveDoneFromAllWorkers(void *self, Message message[], Workers*);
 
+int receiveFromAnyWorkers(void *self, Message *message);
+
 #endif //LAB1_IPCX_H

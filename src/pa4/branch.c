@@ -65,7 +65,7 @@ void start() {
 void work() {
     initWorkers(branchData.branchCount);
 
-    int loopCount = branchData.id * 3;
+    int loopCount = branchData.id * 5;
 
     for (int i = 1; i <= loopCount; ++i) {
         char message[256];
