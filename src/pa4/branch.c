@@ -65,16 +65,16 @@ void start() {
 void work() {
     initWorkers(branchData.branchCount);
 
-    int loopCount = branchData.id * 5;
+    int loopCount = branchData.id * 3;
 
     for (int i = 1; i <= loopCount; ++i) {
         char message[256];
         sprintf(message, log_loop_operation_fmt, branchData.id, i, loopCount);
         request_cs(&branchData);
 
-        printf("proc %d enter to cs\n", branchData.id);
+        printf("%s", message);
         print(message);
-        printf("proc %d out from cs\n", branchData.id);
+        fflush(stdout);
 
         release_cs(&branchData);
     }
