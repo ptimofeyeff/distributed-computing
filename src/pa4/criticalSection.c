@@ -10,7 +10,10 @@ int request_cs(const void * self) {
     BranchData *branchData = (BranchData *) self;
 
     Request currentRequest = sendAndSaveCsRequest(branchData);
-    syncReceiveCsReplies(branchData, currentRequest);
+
+    if (getWorkers().length > 1) {
+        receiveAllRepliesHandler(branchData, currentRequest);
+    }
 
     while (checkEnterCondition(branchData, currentRequest) != 0) {
         syncReceiveCs(branchData);
@@ -26,7 +29,8 @@ int release_cs(const void * self) {
     incrementLamportTime();
     Message releaseMsg;
     buildCsMessage(&releaseMsg, CS_RELEASE);
-    sendToAllChild(branchData, &releaseMsg);
+    Workers workers = getWorkers();
+    sendToAllWorkers(branchData, &releaseMsg, &workers);
     return 0;
 }
 
@@ -43,6 +47,10 @@ void syncReceiveCs(BranchData *branchData) {
             if (requestFromOther.s_header.s_type == CS_RELEASE) {
                 receiveCsRelease(branchData, requestFromOther);
             }
+            if (requestFromOther.s_header.s_type == DONE) {
+                deleteWorker(branchData->senderId);
+                printf("in proc %d delete worker %d\n", branchData->id, branchData->senderId);
+            }
             return;
         }
     }
@@ -52,7 +60,8 @@ Request sendAndSaveCsRequest(BranchData *branchData) {
     incrementLamportTime();
     Message requestCsMsg;
     buildCsMessage(&requestCsMsg, CS_REQUEST);
-    sendToAllChild(branchData, &requestCsMsg);
+    Workers workers = getWorkers();
+    sendToAllWorkers(branchData, &requestCsMsg, &workers);
     printf("proc %d send request (%d, %d)\n", branchData->id, get_lamport_time(), branchData->id);
 
     Request request = {get_lamport_time(), branchData->id};
@@ -61,30 +70,36 @@ Request sendAndSaveCsRequest(BranchData *branchData) {
     return request;
 }
 
-void syncReceiveCsReplies(BranchData *branchData, Request currentRequest) {
+void receiveAllRepliesHandler(BranchData *branchData, Request currentRequest) {
     Message csReplies[branchData->branchCount];
     for (int i = 1; i < branchData->branchCount; ++i) {
         if (branchData->id != i) {
             while (true) {
-                if (receive(branchData, i, &csReplies[i]) == 0) { // голый ресив не увеличивает отметку времени при приеме
+                if (receive(branchData, i, &csReplies[i]) == 0) {
                     printf("proc %d receive message from proc %d with type %d\n",
                            branchData->id, branchData->senderId, csReplies[i].s_header.s_type);
 
                     if (csReplies[i].s_header.s_type == CS_REPLY) {
                         if (csReplies[i].s_header.s_local_time > currentRequest.time) {
-                            break;
+                            break; // ожидаемый реплай
                         } else {
-                            continue;
+                            continue; // какой-то другой реплай (?)
                         }
-                    } else {
-                        if (csReplies[i].s_header.s_type == CS_REQUEST) {
-                            receiveCsRequestAndSendReply(branchData, csReplies[i]);
-                            continue;
-                        }
-                        if (csReplies[i].s_header.s_type == CS_RELEASE) {
-                            receiveCsRelease(branchData, csReplies[i]);
-                            continue;
-                        }
+                    }
+                    if (csReplies[i].s_header.s_type == CS_REQUEST) {
+                        receiveCsRequestAndSendReply(branchData, csReplies[i]);
+                        continue; // новый реквест, тогда сохраяняем его в свою очередь и отправляем реплай
+                    }
+                    if (csReplies[i].s_header.s_type == CS_RELEASE) {
+                        receiveCsRelease(branchData, csReplies[i]);
+                        continue;
+                    }
+                    if (csReplies[i].s_header.s_type == DONE) {
+                        deleteWorker(branchData->senderId);
+                        printf("in proc %d delete worker %d\n", branchData->id, branchData->senderId);
+                        // вместо ожидаемого реплая получили сообщения об окончании работы,
+                        // значит реплай не нужен
+                        break;
                     }
                 }
             }

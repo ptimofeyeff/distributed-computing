@@ -11,7 +11,7 @@ typedef struct {
 
 void syncReceiveCs(BranchData *branchData);
 Request sendAndSaveCsRequest(BranchData *branchData);
-void syncReceiveCsReplies(BranchData *branchData, Request);
+void receiveAllRepliesHandler(BranchData *branchData, Request);
 int checkEnterCondition(BranchData *branchData, Request currentRequest);
 void receiveCsRequestAndSendReply(BranchData *branchData, Message);
 void receiveCsRelease(BranchData *branchData, Message release);

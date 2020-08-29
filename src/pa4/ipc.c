@@ -5,6 +5,7 @@
 #include "ipc.h"
 #include "ipcx.h"
 #include "lamport.h"
+#include "workers.h"
 
 int send(void *self, local_id destination, const Message *message) {
     BranchData *branchData = (BranchData *) self;
@@ -48,6 +49,20 @@ int sendToAllChild(void *self, const Message *message) {
     }
     return 0;
 }
+
+int sendToAllWorkers(BranchData *branchData, Message *message, Workers *workers) {
+    for (int i = 0; i < workers->length; ++i) {
+        if (workers->procId[i] != branchData->id) {
+            int result = send(branchData, workers->procId[i], message);
+            if (result == -1) {
+                printf("fail to send to all workers child\n");
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
 
 int receive(void *self, local_id sender, Message *message) {
     BranchData *branchData = (BranchData *) self;
@@ -95,6 +110,21 @@ void syncReceiveFromAllChild(void *self, Message message[]) {
             while (1) {
                 if (receive(branchData, i, &message[i]) == 0) {
                     break;
+                }
+            }
+        }
+    }
+}
+
+void syncReceiveDoneFromAllWorkers(void *self, Message message[], Workers *workers) {
+    BranchData *branchData = (BranchData *) self;
+    for (int i = 0; i < workers->length; ++i) {
+        if (workers->procId[i] != branchData->id) {
+            while (1) {
+                if (receive(branchData, workers->procId[i], &message[i]) == 0) {
+                    if (message[i].s_header.s_type == DONE) {
+                        break;
+                    }
                 }
             }
         }

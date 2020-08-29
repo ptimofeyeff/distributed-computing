@@ -63,12 +63,9 @@ void start() {
 }
 
 void work() {
-    int loopCount = 2;
-    /*if (branchData.id == 1) {
-        loopCount = 1;
-    } else {
-        loopCount = 2;
-    }*/
+    initWorkers(branchData.branchCount);
+
+    int loopCount = branchData.id * 5;
 
     for (int i = 1; i <= loopCount; ++i) {
         char message[256];
@@ -91,7 +88,8 @@ void done() {
     send_multicast(&branchData, &doneMessage);
 
     Message doneMessages[branchData.branchCount];
-    syncReceiveFromAllChild(&branchData, doneMessages);
+    Workers workers = getWorkers();
+    syncReceiveDoneFromAllWorkers(&branchData, doneMessages, &workers);
     logReceiveDone(branchData.id);
 }
 
