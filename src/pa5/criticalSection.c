@@ -24,18 +24,19 @@ int request_cs(const void * self) {
 
 int release_cs(const void * self) {
     BranchData *branchData = (BranchData *) self;
-
+    branchData->inCs = false;
     for (int i = 0; i <MAX_PROCESS_ID; ++i) {
         if (branchData->deferredRequests[branchData->id][i] == 1) {
             incrementLamportTime();
             Message reply;
             buildCsMessage(&reply, CS_REPLY);
             send(branchData, i, &reply);
-            printf("in proc %d send reply to proc %d\n", branchData->id, i);
+            printf("in proc %d send reply to proc %d (in release)\n", branchData->id, i);
             fflush(stdout);
+            branchData->deferredRequests[branchData->id][i] = 0;
         }
     }
-    branchData->inCs = false;
+
     printf("proc %d out from cs\n", branchData->id);
     fflush(stdout);
     return 0;
@@ -56,30 +57,33 @@ Request sendCsRequest(BranchData *branchData) {
 void receiveAllRepliesHandler(BranchData *branchData, Request thisRequest, Workers workers) {
     Message csReplies;
     int ackCounter = 0;
-    int currentWorkersLength = getWorkers().length;
+    int currentWorkersLength = getWorkers().length ;
+    int replies[MAX_PROCESS_ID];
 
-    for (int i = 0; i <workers.length ; ++i) {
-        if (branchData->id != workers.procId[i]) {
-            while (ackCounter < currentWorkersLength) {
-                if (receiveFromAnyWorkers(branchData, &csReplies) == 0) {
-                    if (csReplies.s_header.s_type == CS_REPLY) {
-                        ackCounter++;
-                        printf("proc %d receive replay from proc %d\n", branchData->id, branchData->senderId);
-                        fflush(stdout);
-                        break;
-                    } else if (csReplies.s_header.s_type == CS_REQUEST) {
-                        receiveCsRequestAndSendReply(branchData, csReplies, thisRequest);
-                        continue;
-                    } else if (csReplies.s_header.s_type == DONE) {
-                        deleteWorker(branchData->senderId);
-                        ackCounter++;
-                        break;
-                    } else {
-                        printf("smth wrong\n");
-                    }
+    // cannot use empty init extension :(
+    for (int i = 0; i < MAX_PROCESS_ID; ++i) {
+        replies[i] = 0;
+    }
+
+    while (ackCounter < (currentWorkersLength - 1)) {
+        if (receiveFromAnyWorkers(branchData, &csReplies) == 0) {
+            if (csReplies.s_header.s_type == CS_REPLY) {
+                ackCounter++;
+                replies[branchData->senderId] = 1;
+                printf("proc %d receive replay from proc %d\n", branchData->id, branchData->senderId);
+                fflush(stdout);
+            } else if (csReplies.s_header.s_type == CS_REQUEST) {
+                receiveCsRequestAndSendReply(branchData, csReplies, thisRequest);
+            } else if (csReplies.s_header.s_type == DONE) {
+                deleteWorker(branchData->senderId);
+                if (replies[branchData->senderId] == 0) {
+                    ackCounter++;
                 }
+                printf("increase replyCounter for proc %d due to receive done msg\n", branchData->id);
+                fflush(stdout);
+            } else {
+                printf("smth wrong\n");
             }
-
         }
     }
     printf("proc %d collect all replies for req (%d, %d)\n", branchData->id, thisRequest.time, thisRequest.procId);

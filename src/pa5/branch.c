@@ -67,7 +67,7 @@ void start() {
 void work() {
     initWorkers(branchData.branchCount);
 
-    int loopCount =branchData.id * 5;
+    int loopCount = branchData.id * 5;
 
     if (branchData.mutex) {
         for (int i = 1; i <= loopCount; ++i) {
