@@ -11,9 +11,13 @@ typedef struct {
 } Request;
 
 void syncReceiveCs(BranchData *branchData);
-Request sendAndSaveCsRequest(BranchData *branchData);
-void receiveAllRepliesHandler(BranchData *branchData, Request currentRequest, Workers workers);
-int checkEnterCondition(BranchData *branchData, Request currentRequest);
-void receiveCsRequestAndSendReply(BranchData *branchData, Message);
+
+Request sendCsRequest(BranchData *branchData);
+
+void receiveAllRepliesHandler(BranchData *branchData, Request, Workers);
+
+void receiveCsRequestAndSendReply(BranchData *branchData, Message, Request);
+
 void receiveCsRelease(BranchData *branchData, Message release);
+
 #endif //LAB1_CRITICALSECTION_H

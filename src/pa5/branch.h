@@ -12,6 +12,8 @@ typedef struct {
     timestamp_t logicTime;
     local_id senderId;
     bool mutex;
+    bool inCs;
+    int deferredRequests[MAX_PROCESS_ID][MAX_PROCESS_ID];
 } BranchData;
 
 void createBranch(TopologyDescriptors *, int, bool);
