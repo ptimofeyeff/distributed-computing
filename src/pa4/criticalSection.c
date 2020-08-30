@@ -81,44 +81,23 @@ Request sendAndSaveCsRequest(BranchData *branchData) {
 void receiveAllRepliesHandler(BranchData *branchData, Request currentRequest, Workers workers) {
     Message csReplies;
     int ackCounter = 0;
-    int currentWorkersLength = getWorkers().length;
+    int currentWorkersLength = getWorkers().length - 1;
 
-    for (int i = 0; i < workers.length; ++i) {
-        if (branchData->id != workers.procId[i]) {
-            while (ackCounter < currentWorkersLength) {
-                //printf("in proc %d try to receive reply for req (%d, %d) from proc %d\n",
-                  //     branchData->id, currentRequest.time, currentRequest.procId, workers.procId[i]);
-                fflush(stdout);
-                if (receiveFromAnyWorkers(branchData, &csReplies) == 0) {
 
-                    if (csReplies.s_header.s_type == CS_REPLY) {
-                        if (csReplies.s_header.s_local_time > currentRequest.time) {
-                            //printf("proc %d receive ack from proc %d for request (%d, %d)\n",
-                              //     branchData->id, branchData->senderId, currentRequest.time, currentRequest.procId);
-                            fflush(stdout);
-                            ackCounter++;
-                            break;
-                        } else {
-                            printf("wrong reply\n");
-                            continue;
-                        }
-                    } else if (csReplies.s_header.s_type == CS_REQUEST) {
-                        receiveCsRequestAndSendReply(branchData, csReplies);
-                        continue;
-                    } else if (csReplies.s_header.s_type == CS_RELEASE) {
-                        receiveCsRelease(branchData, csReplies);
-                        continue;
-                    } else if (csReplies.s_header.s_type == DONE) {
-                        deleteWorker(branchData->senderId);
-                        //printf("in proc %d delete worker %d\n", branchData->id, branchData->senderId);
-                        fflush(stdout);
-                        ackCounter++;
-                        break;
-                    } else {
-                        printf("smth wrong\n");
-                    }
-                }
-            }
+    while (ackCounter < currentWorkersLength) {
+        if (receiveFromAnyWorkers(branchData, &csReplies) == 0) {
+             if (csReplies.s_header.s_type == CS_REPLY) {
+                 ackCounter++;
+             } else if (csReplies.s_header.s_type == CS_REQUEST) {
+                 receiveCsRequestAndSendReply(branchData, csReplies);
+             } else if (csReplies.s_header.s_type == CS_RELEASE) {
+                 receiveCsRelease(branchData, csReplies);
+             } else if (csReplies.s_header.s_type == DONE) {
+                 deleteWorker(branchData->senderId);
+                 ackCounter++;
+             } else {
+                 printf("smth wrong\n");
+             }
         }
     }
 }
